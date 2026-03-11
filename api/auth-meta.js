@@ -20,7 +20,6 @@ module.exports = function authMeta(req, res) {
   // Scopes básicos já aprovados pela Meta
   const scopes = [
     'public_profile',
-    'email',
   ].join(',');
 
   // Monta a URL do Facebook Login Dialog
