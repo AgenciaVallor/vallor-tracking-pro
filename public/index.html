@@ -7,7 +7,10 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  window.S = { user_id: null, googleToken: null, metaToken: null, chart: null };
+
   // PROTEÇÃO DE ROTA (Auth check)
   async function checkAuth() {
     try {
@@ -21,8 +24,10 @@
         window.location.href = '/login';
       } else {
         window.supabaseClient = sb;
+        window.S.user_id = session.user.id;
         document.getElementById('userEmailDisplay').textContent = session.user.email;
         document.getElementById('userAccount').style.display = 'block';
+        if(typeof loadDashboard === 'function') loadDashboard();
       }
     } catch (e) {
       console.error('Erro no checkAuth:', e);
@@ -389,6 +394,34 @@ footer{
   border-top:1px solid var(--border2);margin-top:40px;
 }
 footer em{color:var(--gold-dim);font-style:normal;}
+
+/* ── DASHBOARD V2.0 ── */
+.db-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+@media(max-width:768px){.db-grid{grid-template-columns:1fr 1fr;}}
+.db-card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:24px;position:relative;overflow:hidden;}
+.db-card .label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.db-card .value{font-size:24px;font-weight:800;font-family:'Syne',sans-serif;color:var(--white);}
+.db-card .value span{font-size:14px;font-weight:400;color:var(--gray2);margin-left:4px;}
+
+.tag-sent{background:rgba(15,191,106,0.1);color:var(--green2);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+.tag-error{background:rgba(255,64,96,0.1);color:var(--red);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+.tag-dedup{background:rgba(200,150,12,0.1);color:var(--gold2);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+
+.tracking-table{width:100%;border-collapse:collapse;margin-top:20px;}
+.tracking-table th{text-align:left;padding:12px;font-size:11px;color:var(--gray);text-transform:uppercase;border-bottom:1px solid var(--border2);}
+.tracking-table td{padding:14px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);}
+
+.integration-card{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:16px 20px;margin-bottom:10px;}
+.integration-card .info{display:flex;align-items:center;gap:12px;}
+.integration-card .logo-p{width:34px;height:34px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--gold);}
+
+.alert-item{display:flex;gap:12px;padding:12px 16px;border-radius:10px;background:rgba(255,64,96,0.05);border:1px solid rgba(255,64,96,0.1);margin-bottom:8px;align-items:center;}
+.alert-item.read{opacity:0.6;filter:grayscale(1);}
+
+.main-tabs{display:flex;gap:10px;margin-bottom:32px;border-bottom:1px solid var(--border2);padding-bottom:12px;overflow-x:auto;}
+.main-tab-btn{background:none;border:none;color:var(--gray);font-size:14px;font-weight:600;padding:8px 16px;cursor:pointer;transition:all 0.2s;position:relative;white-space:nowrap;}
+.main-tab-btn.active{color:var(--gold2);}
+.main-tab-btn.active::after{content:'';position:absolute;bottom:-13px;left:0;right:0;height:2px;background:var(--gold2);}
 </style>
 </head>
 <body>
@@ -403,17 +436,71 @@ footer em{color:var(--gold-dim);font-style:normal;}
       <div id="userAccount" style="font-size:12px;color:var(--gray2);display:none;">
         <span style="opacity:0.6">Usuário:</span> <strong id="userEmailDisplay" style="color:var(--gold);"></strong>
       </div>
-      <div class="nav-badge">● Interno v1.0</div>
+      <div class="nav-badge">● PRO v2.0</div>
       <a onclick="handleLogout()" style="font-size:12px;color:var(--gray);cursor:pointer;text-decoration:none;border-left:1px solid var(--border2);padding-left:15px;">Sair</a>
     </div>
   </nav>
 
-  <!-- HERO -->
-  <div class="hero" id="heroSection">
-    <div class="hero-label">◆ Protocolo V7™ — Automação Total</div>
-    <h1>Configure<br/><em>tudo automaticamente</em></h1>
-    <p>Cole os IDs do cliente. O app faz login nas APIs, cria as tags no GTM, configura o Pixel e ativa a CAPI — tudo sem tocar no painel.</p>
+  <div class="main-tabs">
+    <button class="main-tab-btn active" id="mt-dashboard" onclick="switchView('dashboard')">📊 Dashboard</button>
+    <button class="main-tab-btn" id="mt-automation" onclick="switchView('automation')">🚀 Automação</button>
+    <button class="main-tab-btn" id="mt-integrations" onclick="switchView('integrations')">🔌 Integrações</button>
+    <button class="main-tab-btn" id="mt-alerts" onclick="switchView('alerts')">🔔 Alertas</button>
+    <button class="main-tab-btn" id="mt-settings" onclick="switchView('settings')">⚙️ Configurações</button>
   </div>
+
+  <!-- ══ VIEW: DASHBOARD ═════════════════════════════════════════════════ -->
+  <div class="view-panel active" id="view-dashboard">
+    <div class="db-grid">
+      <div class="db-card">
+        <div class="label">Eventos Hoje</div>
+        <div class="value" id="db-total-today">0</div>
+      </div>
+      <div class="db-card">
+        <div class="label">EMQ Médio</div>
+        <div class="value" id="db-avg-emq">0.0 <span id="emq-status">...</span></div>
+      </div>
+      <div class="db-card">
+        <div class="label">Deduplicação</div>
+        <div class="value" id="db-dedup">0%</div>
+      </div>
+      <div class="db-card">
+        <div class="label">Cobertura</div>
+        <div class="value" id="db-coverage">0%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Volume de Eventos (24h)</div>
+      <div style="height:250px;width:100%;"><canvas id="eventChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Últimos Eventos Capturados</div>
+      <table class="tracking-table">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Evento</th>
+            <th>Plataforma</th>
+            <th>Status</th>
+            <th>EMQ</th>
+          </tr>
+        </thead>
+        <tbody id="last-events-body">
+          <!-- Dinâmico -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: AUTOMATION (SETUP) ═══════════════════════════════════════ -->
+  <div class="view-panel" id="view-automation">
+    <!-- O HERO antigo vai aqui dentro se quiser, ou apenas os passos -->
+    <div class="hero" style="padding-bottom:30px">
+      <h1>Automação <em>V7</em></h1>
+      <p>Configure Tags, Triggers e CAPI em massa para novos clientes em segundos.</p>
+    </div>
 
   <!-- STEPS -->
   <div class="steps-bar">
@@ -623,13 +710,100 @@ footer em{color:var(--gold-dim);font-style:normal;}
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;">
-      <button class="btn" onclick="downloadReport()">⬇️ Baixar relatório completo</button>
-      <button class="btn btn-ghost" onclick="newClient()">+ Novo cliente</button>
+  </div><!-- /view-automation -->
+
+  <!-- ══ VIEW: INTEGRATIONS ═════════════════════════════════════════════ -->
+  <div class="view-panel" id="view-integrations">
+    <div class="card">
+      <div class="card-title">Fontes de Dados (Webhooks)</div>
+      <div class="card-sub">Conecte seus checkouts para rastreamento server-side automático. Use seu API KEY: <code id="user-api-key" style="color:var(--gold2)">CARREGANDO...</code></div>
+      
+      <div id="integrations-list">
+        <!-- Cards de Plataforma -->
+        <div class="integration-card">
+          <div class="info">
+            <div class="logo-p">H</div>
+            <div><div style="font-weight:600;font-size:14px;">Hotmart</div><div style="font-size:11px;color:var(--gray)">Rastreamento Purchase</div></div>
+          </div>
+          <button class="btn btn-ghost" style="padding:4px 12px;font-size:11px" onclick="copyWebhook('hotmart')">Copiar Webhook</button>
+        </div>
+        <div class="integration-card">
+          <div class="info">
+            <div class="logo-p">K</div>
+            <div><div style="font-weight:600;font-size:14px;">Kiwify</div><div style="font-size:11px;color:var(--gray)">Rastreamento Purchase</div></div>
+          </div>
+          <button class="btn btn-ghost" style="padding:4px 12px;font-size:11px" onclick="copyWebhook('kiwify')">Copiar Webhook</button>
+        </div>
+        <div class="integration-card">
+          <div class="info">
+            <div class="logo-p">G</div>
+            <div><div style="font-weight:600;font-size:14px;">Greenn</div><div style="font-size:11px;color:var(--gray)">Rastreamento Purchase</div></div>
+          </div>
+          <button class="btn btn-ghost" style="padding:4px 12px;font-size:11px" onclick="copyWebhook('greenn')">Copiar Webhook</button>
+        </div>
+        <div class="integration-card">
+          <div class="info">
+            <div class="logo-p">E</div>
+            <div><div style="font-weight:600;font-size:14px;">Eduzz</div><div style="font-size:11px;color:var(--gray)">Rastreamento Purchase</div></div>
+          </div>
+          <button class="btn btn-ghost" style="padding:4px 12px;font-size:11px" onclick="copyWebhook('eduzz')">Copiar Webhook</button>
+        </div>
+      </div>
     </div>
   </div>
 
-</div><!-- /wrap -->
+  <!-- ══ VIEW: ALERTS ═══════════════════════════════════════════════════ -->
+  <div class="view-panel" id="view-alerts">
+    <div class="card">
+      <div class="card-title">Central de Saúde</div>
+      <div class="card-sub">Monitoramento automático de integridade do pixel e CAPI.</div>
+      <div id="alerts-list-container">
+        <!-- Alertas dinâmicos -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: SETTINGS ═════════════════════════════════════════════════ -->
+  <div class="view-panel" id="view-settings">
+    <div class="card">
+      <div class="card-title">Configurações Globais</div>
+      <div class="card-sub">Ajuste os parâmetros de conexão com as APIs Meta e Google.</div>
+      
+      <div class="grid2">
+        <div class="field">
+          <label>CAPI Access Token</label>
+          <input type="password" id="set-capi-token" placeholder="EAABsbCS..."/>
+        </div>
+        <div class="field">
+          <label>Meta Pixel ID</label>
+          <input type="text" id="set-pixel-id" placeholder="123456..."/>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>GTM Container ID</label>
+          <input type="text" id="set-gtm-id" placeholder="GTM-XXXXXX"/>
+        </div>
+        <div class="field">
+          <label>Ad Account ID (act_...)</label>
+          <input type="text" id="set-account-id" placeholder="act_123456..."/>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="syncAudiences()">🔄 Sincronizar Públicos</button>
+        <button class="btn" onclick="saveSettings()">Salvar Configurações</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">GTM Snippet</div>
+      <div class="card-sub">Instale este código em seu site (head) para habilitar o rastreamento Vallor.</div>
+      <div class="code-out">
+        <button class="copy-btn" onclick="cp('gtm-snippet-global',this)">Copiar</button>
+        <pre id="gtm-snippet-global"></pre>
+      </div>
+    </div>
+  </div>
 
 <footer><em>VALLOR GROWTH PLATFORM</em> · Protocolo V7™ · Laboratório de Neurociência Aplicada a Vendas</footer>
 
@@ -652,15 +826,191 @@ const CONFIG = {
 // ══════════════════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════════════════
-const S = {
-  googleToken: null,
-  metaToken: null,
-  googleConnected: false,
-  metaConnected: false,
-  currentPanel: 1,
-  data: {},
-  results: {}
-};
+// S já declarado como window.S no head
+
+// ── NAVEGAÇÃO ENTRE ABAS ──
+function switchView(viewId) {
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+  
+  const targetView = document.getElementById(`view-${viewId}`);
+  const targetTab  = document.getElementById(`mt-${viewId}`);
+  
+  if(targetView) targetView.classList.add('active');
+  if(targetTab)  targetTab.classList.add('active');
+  
+  if(viewId === 'dashboard') loadDashboard();
+  if(viewId === 'settings') loadSettings();
+  if(viewId === 'alerts') loadAlerts();
+}
+
+async function loadDashboard() {
+  if (!S.user_id) return;
+  try {
+    const res = await fetch(`/api/dashboard?user_id=${S.user_id}`);
+    const data = await res.json();
+    if (!data.success) return;
+
+    // 1. Stats
+    document.getElementById('db-total-today').textContent = data.stats.totalToday;
+    document.getElementById('db-avg-emq').textContent = data.stats.avgEMQ.toFixed(1);
+    document.getElementById('db-dedup').textContent = data.stats.dedupRate + '%';
+    document.getElementById('db-coverage').textContent = data.stats.coverage + '%';
+    
+    const emqStatus = document.getElementById('emq-status');
+    if(data.stats.avgEMQ >= 7) { emqStatus.textContent = '(Excelente)'; emqStatus.style.color = 'var(--green)'; }
+    else if(data.stats.avgEMQ >= 5) { emqStatus.textContent = '(Bom)'; emqStatus.style.color = 'var(--gold2)'; }
+    else { emqStatus.textContent = '(Baixo)'; emqStatus.style.color = 'var(--red)'; }
+
+    // 2. Tabela de eventos
+    const tbody = document.getElementById('last-events-body');
+    tbody.innerHTML = data.lastEvents.map(ev => `
+      <tr>
+        <td>${new Date(ev.created_at).toLocaleTimeString()}</td>
+        <td><strong>${ev.event_name}</strong></td>
+        <td>${ev.platform}</td>
+        <td><span class="tag-${ev.status === 'sent' ? 'sent' : 'error'}">${ev.status}</span></td>
+        <td>${ev.match_quality || '—'}</td>
+      </tr>
+    `).join('');
+
+    // 3. Gráfico
+    renderChart(data.chartData);
+
+  } catch (e) { console.error('Erro dashboard:', e); }
+}
+
+function renderChart(chartData) {
+  const ctx = document.getElementById('eventChart').getContext('2d');
+  if(S.chart) S.chart.destroy();
+
+  // Agrupar por hora
+  const hours = Array.from({length: 24}, (_, i) => i);
+  const counts = new Array(24).fill(0);
+  
+  chartData.forEach(d => {
+    const h = new Date(d.created_at).getHours();
+    counts[h]++;
+  });
+
+  S.chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: hours.map(h => `${h}h`),
+      datasets: [{
+        label: 'Eventos',
+        data: counts,
+        borderColor: '#C8960C',
+        backgroundColor: 'rgba(200,150,12,0.1)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+async function loadSettings() {
+  if (!S.user_id) return;
+  const { data: settings } = await window.supabaseClient.from('user_settings').select('*').eq('user_id', S.user_id).single();
+  if (settings) {
+    document.getElementById('set-capi-token').value = settings.meta_access_token || '';
+    document.getElementById('set-pixel-id').value = settings.meta_pixel_id || '';
+    document.getElementById('set-gtm-id').value = settings.gtm_container_id || '';
+    document.getElementById('set-account-id').value = settings.meta_account_id || '';
+    
+    // Gerar Snippet
+    const snippet = `<!-- GTM (Vallor Tracking PRO) -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${settings.gtm_container_id || 'GTM-XXXXXX'}');<\/script>`;
+    document.getElementById('gtm-snippet-global').textContent = snippet;
+  }
+  
+  // API Key do usuário (mock ou campo da tabela se existir)
+  document.getElementById('user-api-key').textContent = S.user_id.split('-')[0].toUpperCase();
+}
+
+async function saveSettings() {
+  const meta_access_token = document.getElementById('set-capi-token').value;
+  const meta_pixel_id     = document.getElementById('set-pixel-id').value;
+  const gtm_container_id  = document.getElementById('set-gtm-id').value;
+  const meta_account_id   = document.getElementById('set-account-id').value;
+
+  const { error } = await window.supabaseClient.from('user_settings').upsert({
+    user_id: S.user_id,
+    meta_access_token,
+    meta_pixel_id,
+    gtm_container_id,
+    meta_account_id,
+    updated_at: new Date()
+  });
+
+  if (!error) {
+    alert('Configurações salvas com sucesso!');
+    loadSettings();
+  } else {
+    alert('Erro ao salvar: ' + error.message);
+  }
+}
+
+async function loadAlerts() {
+  const { data: alerts } = await window.supabaseClient.from('alerts').select('*').eq('user_id', S.user_id).order('created_at', {ascending: false});
+  const container = document.getElementById('alerts-list-container');
+  if(!alerts || alerts.length === 0) {
+    container.innerHTML = '<div class="alert alert-g">Sem alertas ativos. Tudo operando normalmente.</div>';
+    return;
+  }
+  container.innerHTML = alerts.map(a => `
+    <div class="alert-item ${a.is_read ? 'read' : ''}">
+      <span style="font-size:20px">${a.type === 'SILENCE' ? '🛑' : '⚠️'}</span>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:14px">${a.type}</div>
+        <div style="font-size:12px;color:var(--gray2)">${a.message}</div>
+      </div>
+      ${!a.is_read ? `<button class="btn btn-ghost" style="padding:4px 8px;font-size:10px" onclick="markRead('${a.id}')">Marcar lido</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function markRead(id) {
+  await window.supabaseClient.from('alerts').update({ is_read: true }).eq('id', id);
+  loadAlerts();
+}
+
+function copyWebhook(platform) {
+  const key = document.getElementById('user-api-key').textContent;
+  const url = `${window.location.origin}/api/webhooks/${platform}?key=${key}`;
+  navigator.clipboard.writeText(url);
+  alert(`URL do webhook ${platform} copiada!`);
+}
+
+async function syncAudiences() {
+  const btn = event.target;
+  btn.textContent = '⌛ Sincronizando...';
+  try {
+    const res = await fetch('/api/audiences/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: S.user_id })
+    });
+    const data = await res.json();
+    if(data.success) alert('Públicos sincronizados com sucesso na Meta!');
+    else alert('Erro: ' + data.results[0].result.error.message);
+  } catch(e) { alert('Erro na conexão com a API'); }
+  btn.textContent = '🔄 Sincronizar Públicos';
+}
 
 // ══════════════════════════════════════════════════════════════════════════
 // HANDLE OAUTH CALLBACK ON PAGE LOAD

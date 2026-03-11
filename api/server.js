@@ -61,6 +61,12 @@ app.get('/auth/google/callback', authGoogleCb);
 app.get('/auth/meta', authMeta);
 app.get('/auth/meta/callback', authMetaCb);
 
+const trackingHandler = require('./tracking');
+const webhooksHandler = require('./webhooks');
+const audiencesHandler = require('./audiences');
+const alertsHandler = require('./alerts');
+const dashboardHandler = require('./dashboard');
+
 // GTM API (todas as operações)
 app.all('/api/gtm/:action', gtmHandler);
 
@@ -70,6 +76,13 @@ app.all('/api/meta/:action', metaHandler);
 // Clientes (Supabase)
 app.all('/api/clients', clientsHandler);
 app.all('/api/clients/:id', clientsHandler);
+
+// Tracking & Webhooks v2.0
+app.post('/api/track', trackingHandler);
+app.all('/api/webhooks/:platform', webhooksHandler);
+app.post('/api/audiences/sync', audiencesHandler);
+app.get('/api/alerts/check', alertsHandler);
+app.get('/api/dashboard', dashboardHandler);
 
 // Info de sessão (tokens ativos)
 app.get('/api/session', sessionHandler);

@@ -18,6 +18,12 @@
     { "src": "/api/gtm/(.*)", "dest": "/api/gtm.js" },
     { "src": "/api/meta/(.*)", "dest": "/api/meta.js" },
     { "src": "/api/clients(.*)", "dest": "/api/clients.js" },
+    { "src": "/api/track", "dest": "/api/tracking.js" },
+    { "src": "/api/webhooks/(.*)", "dest": "/api/webhooks.js" },
+    { "src": "/api/audiences/sync", "dest": "/api/audiences.js" },
+    { "src": "/api/alerts/check", "dest": "/api/alerts.js" },
+    { "src": "/api/dashboard", "dest": "/api/dashboard.js" },
+    { "src": "/api/session", "dest": "/api/session.js" },
     { "src": "/api/config", "dest": "/api/config.js" },
     { "src": "/login", "dest": "/public/login.html" },
     { "src": "/(.*)", "dest": "/public/index.html" }
