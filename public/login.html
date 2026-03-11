@@ -426,22 +426,57 @@
 
 <script>
 async function initLogin() {
-  const res = await fetch('/api/config');
-  const { supabaseUrl, supabaseKey } = await res.json();
-  const { createClient } = window.supabase;
-  const client = createClient(supabaseUrl, supabaseKey);
+  try {
+    const res = await fetch('/api/config');
+    const { supabaseUrl, supabaseKey } = await res.json();
+    const { createClient } = window.supabase;
+    const client = createClient(supabaseUrl, supabaseKey);
 
-  document.getElementById('btnLogin').addEventListener('click', async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const { error } = await client.auth.signInWithPassword({ email, password });
-    if (error) {
-      document.getElementById('pwErr').textContent = error.message;
-      document.getElementById('pwErr').classList.add('show');
-    } else {
-      window.location.href = '/';
-    }
-  });
+    const btn = document.getElementById('btnLogin');
+    const pwErr = document.getElementById('pwErr');
+    const overlay = document.getElementById('successOverlay');
+
+    btn.addEventListener('click', async () => {
+      // Limpar erros anteriores
+      pwErr.textContent = '';
+      pwErr.classList.remove('err');
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if(!email || !password) {
+        pwErr.textContent = 'Preencha todos os campos';
+        pwErr.classList.add('err');
+        return;
+      }
+
+      // Feedback de carregamento
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        pwErr.textContent = error.message;
+        pwErr.classList.add('err');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      } else {
+        // Sucesso — Mostrar overlay premium antes de mudar página
+        overlay.classList.add('show');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1200);
+      }
+    });
+
+    // Check se já está logado
+    const { data: { session } } = await client.auth.getSession();
+    if (session) window.location.href = '/';
+
+  } catch (err) {
+    console.error('Erro na inicialização:', err);
+  }
 }
 document.addEventListener('DOMContentLoaded', initLogin);
 </script>

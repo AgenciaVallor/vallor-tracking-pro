@@ -13,7 +13,8 @@
     try {
       const r = await fetch('/api/config');
       const config = await r.json();
-      const sb = supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      const { createClient } = window.supabase;
+      const sb = createClient(config.supabaseUrl, config.supabaseKey);
       const { data: { session } } = await sb.auth.getSession();
       
       if (!session) {
