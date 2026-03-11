@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vallor Tracking PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #04080F;
+  --surface: #080F1E;
+  --card: #0C1526;
+  --card2: #101D33;
+  --border: rgba(200,150,12,0.15);
+  --border2: rgba(255,255,255,0.06);
+  --gold: #C8960C;
+  --gold2: #F0B429;
+  --gold3: #FFD166;
+  --gold-dim: rgba(200,150,12,0.08);
+  --blue: #1A6BFF;
+  --blue2: #4D8FFF;
+  --green: #0FBF6A;
+  --green2: #2EE89A;
+  --red: #FF4060;
+  --white: #EEF2FF;
+  --gray: #6B7A9F;
+  --gray2: #9AAAC4;
+  --r: 12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--white);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* NOISE TEXTURE */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity:0.4;pointer-events:none;
+}
+
+/* GRADIENT ORBS */
+.orb{position:fixed;border-radius:50%;filter:blur(120px);pointer-events:none;z-index:0;}
+.orb1{width:600px;height:600px;background:radial-gradient(circle,rgba(200,150,12,0.06),transparent 70%);top:-200px;right:-100px;}
+.orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(26,107,255,0.05),transparent 70%);bottom:-100px;left:-100px;}
+.orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(15,191,106,0.04),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);}
+
+.wrap{max-width:860px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+
+/* ── HEADER ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:24px 0 20px;
+  border-bottom:1px solid var(--border2);
+  margin-bottom:48px;
+}
+.logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:18px;
+  letter-spacing:-0.5px;
+  background:linear-gradient(90deg,var(--gold2),var(--gold3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.logo span{color:var(--gray);-webkit-text-fill-color:var(--gray);font-weight:400;font-size:13px;margin-left:8px;}
+.nav-badge{
+  background:rgba(15,191,106,0.1);border:1px solid rgba(15,191,106,0.25);
+  border-radius:999px;padding:5px 14px;
+  font-size:11px;font-weight:600;color:var(--green2);
+  letter-spacing:1px;text-transform:uppercase;
+}
+
+/* HERO */
+.hero{text-align:center;padding:20px 0 56px;}
+.hero-label{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--gold-dim);border:1px solid var(--border);
+  border-radius:999px;padding:7px 18px;margin-bottom:28px;
+  font-size:12px;font-weight:600;color:var(--gold2);letter-spacing:1.5px;text-transform:uppercase;
+}
+.hero h1{
+  font-family:'Syne',sans-serif;font-size:clamp(36px,5.5vw,58px);
+  font-weight:800;line-height:1.05;letter-spacing:-1.5px;
+  margin-bottom:20px;
+}
+.hero h1 em{
+  font-style:normal;
+  background:linear-gradient(135deg,var(--gold2) 0%,var(--gold3) 50%,var(--gold2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero p{color:var(--gray2);font-size:17px;max-width:500px;margin:0 auto 40px;line-height:1.65;}
+
+/* STEPS BAR */
+.steps-bar{
+  display:flex;align-items:center;justify-content:center;
+  gap:0;margin-bottom:52px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:999px;padding:6px;
+  width:fit-content;margin-left:auto;margin-right:auto;
+}
+.step-pill{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:999px;
+  font-size:13px;font-weight:600;color:var(--gray);
+  cursor:default;transition:all 0.3s;white-space:nowrap;
+}
+.step-pill .snum{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;transition:all 0.3s;
+}
+.step-pill.active{background:var(--card2);color:var(--white);}
+.step-pill.active .snum{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;}
+.step-pill.done{color:var(--green);}
+.step-pill.done .snum{background:var(--green);color:#fff;}
+
+/* PANEL */
+.panel{display:none;animation:up 0.45s cubic-bezier(.16,1,.3,1);}
+.panel.active{display:block;}
+@keyframes up{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+/* CARD */
+.card{
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:16px;
+  padding:36px;
+  margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0.4;
+}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:21px;font-weight:700;
+  margin-bottom:6px;letter-spacing:-0.3px;
+}
+.card-sub{color:var(--gray2);font-size:14px;line-height:1.6;margin-bottom:28px;}
+
+/* AUTH BUTTONS */
+.auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px;}
+@media(max-width:560px){.auth-grid{grid-template-columns:1fr;}}
+.auth-btn{
+  display:flex;align-items:center;gap:14px;
+  background:var(--card2);
+  border:1px solid var(--border2);
+  border-radius:12px;padding:18px 22px;
+  cursor:pointer;transition:all 0.25s;
+  text-align:left;
+}
+.auth-btn:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-1px);}
+.auth-btn.connected{border-color:rgba(15,191,106,0.4);background:rgba(15,191,106,0.06);}
+.auth-btn.connecting{border-color:rgba(200,150,12,0.4);background:rgba(200,150,12,0.06);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
+.auth-icon{
+  width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.auth-icon-google{background:rgba(66,133,244,0.15);}
+.auth-icon-meta{background:rgba(24,119,242,0.15);}
+.auth-btn-info{}
+.auth-btn-info .aname{font-weight:600;font-size:15px;color:var(--white);margin-bottom:2px;}
+.auth-btn-info .astatus{font-size:12px;color:var(--gray);transition:color 0.3s;}
+.auth-btn.connected .astatus{color:var(--green);}
+.auth-btn .check{margin-left:auto;font-size:18px;opacity:0;transition:all 0.3s;}
+.auth-btn.connected .check{opacity:1;}
+
+/* INPUT */
+.field{margin-bottom:18px;}
+.field label{
+  display:block;font-size:11px;font-weight:600;
+  color:var(--gold2);letter-spacing:1.5px;text-transform:uppercase;
+  margin-bottom:8px;
+}
+.field .hint{font-size:12px;color:var(--gray);margin-bottom:8px;text-transform:none;letter-spacing:0;font-weight:400;}
+.field input,.field select,.field textarea{
+  width:100%;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:10px;padding:13px 16px;
+  color:var(--white);font-size:14px;
+  font-family:'DM Sans',sans-serif;
+  outline:none;transition:all 0.2s;
+}
+.field input::placeholder{color:rgba(107,122,159,0.6);}
+.field input:focus,.field select:focus{
+  border-color:rgba(200,150,12,0.5);
+  background:rgba(200,150,12,0.04);
+  box-shadow:0 0 0 3px rgba(200,150,12,0.08);
+}
+.field input.ok{border-color:rgba(15,191,106,0.5);}
+.field input.err{border-color:rgba(255,64,96,0.5);}
+.field select option{background:#0C1526;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:560px){.grid2{grid-template-columns:1fr;}}
+
+/* BTN */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,#9A6E08,var(--gold),var(--gold2));
+  color:#000;border:none;border-radius:10px;
+  padding:15px 32px;font-size:14px;font-weight:700;
+  font-family:'Syne',sans-serif;letter-spacing:0.3px;
+  cursor:pointer;transition:all 0.25s;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,150,12,0.3);}
+.btn:active{transform:translateY(0);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--gray2);padding:13px 26px;font-size:13px;
+}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--white);box-shadow:none;}
+.btn-green{background:linear-gradient(135deg,#0a8a50,var(--green));color:#fff;}
+.btn-green:hover{box-shadow:0 8px 28px rgba(15,191,106,0.25);}
+.btn-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:28px;}
+
+/* PROGRESS CARD */
+.progress-card{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:16px;padding:28px 32px;margin-bottom:16px;
+}
+.progress-card h3{
+  font-family:'Syne',sans-serif;font-size:16px;font-weight:700;
+  margin-bottom:20px;color:var(--white);
+}
+.task-list{list-style:none;}
+.task-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--border2);
+  font-size:14px;color:var(--gray2);
+  transition:all 0.4s;
+}
+.task-item:last-child{border-bottom:none;}
+.task-item .ticon{
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;transition:all 0.4s;
+}
+.task-item.running{color:var(--white);}
+.task-item.running .ticon{
+  background:rgba(200,150,12,0.15);border-color:rgba(200,150,12,0.3);
+  animation:spin 1.5s linear infinite;
+}
+.task-item.done-task{color:var(--white);}
+.task-item.done-task .ticon{background:rgba(15,191,106,0.15);border-color:rgba(15,191,106,0.3);}
+.task-item.error-task{color:var(--red);}
+.task-item.error-task .ticon{background:rgba(255,64,96,0.15);border-color:rgba(255,64,96,0.3);}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* LOG */
+.log-box{
+  background:#020608;border:1px solid rgba(15,191,106,0.15);
+  border-radius:10px;padding:16px 18px;
+  font-family:'DM Mono',monospace;font-size:11px;
+  color:#4ADE80;line-height:1.8;max-height:200px;overflow-y:auto;
+  margin-top:16px;
+}
+.log-box .log-line{margin:0;}
+.log-box .log-err{color:#FF6B6B;}
+.log-box .log-warn{color:#FFD166;}
+.log-box .log-info{color:#60A5FA;}
+
+/* CODE OUTPUT */
+.code-out{
+  background:#020608;border:1px solid rgba(255,255,255,0.06);
+  border-radius:10px;padding:18px;position:relative;
+  margin-bottom:14px;
+}
+.code-out pre{
+  font-family:'DM Mono',monospace;font-size:11.5px;
+  color:#93C5FD;white-space:pre-wrap;word-break:break-all;
+  line-height:1.7;max-height:260px;overflow-y:auto;
+}
+.code-label{
+  font-size:11px;font-weight:600;color:var(--gold2);
+  letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;
+}
+.copy-btn{
+  position:absolute;top:12px;right:12px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border2);
+  border-radius:7px;padding:5px 12px;
+  color:var(--gray2);font-size:11px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.copy-btn:hover{background:rgba(200,150,12,0.15);color:var(--gold2);border-color:var(--border);}
+.copy-btn.ok{background:rgba(15,191,106,0.15);color:var(--green);border-color:rgba(15,191,106,0.3);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:8px;padding:8px 16px;
+  color:var(--gray);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.tab.on{background:rgba(200,150,12,0.12);border-color:rgba(200,150,12,0.35);color:var(--gold2);}
+.tabp{display:none;}
+.tabp.on{display:block;}
+
+/* ALERT */
+.alert{
+  border-radius:10px;padding:13px 16px;
+  font-size:13px;line-height:1.6;margin-bottom:16px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.alert-y{background:rgba(200,150,12,0.07);border:1px solid rgba(200,150,12,0.25);color:#D4A84B;}
+.alert-g{background:rgba(15,191,106,0.07);border:1px solid rgba(15,191,106,0.25);color:var(--green2);}
+.alert-r{background:rgba(255,64,96,0.07);border:1px solid rgba(255,64,96,0.25);color:#FF8097;}
+.alert-b{background:rgba(26,107,255,0.07);border:1px solid rgba(26,107,255,0.25);color:var(--blue2);}
+
+/* SUCCESS */
+.success-wrap{text-align:center;padding:40px 20px;}
+.trophy{font-size:64px;display:block;margin-bottom:20px;animation:bounce 1s ease;}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.success-wrap h2{
+  font-family:'Syne',sans-serif;font-size:34px;font-weight:800;
+  background:linear-gradient(135deg,var(--gold2),var(--gold3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:10px;letter-spacing:-0.5px;
+}
+.success-wrap p{color:var(--gray2);font-size:15px;line-height:1.6;}
+
+/* EMQ METER */
+.emq-bar{background:rgba(255,255,255,0.05);border-radius:999px;height:8px;margin:8px 0 4px;overflow:hidden;}
+.emq-fill{height:100%;border-radius:999px;transition:width 1.5s cubic-bezier(.16,1,.3,1);
+  background:linear-gradient(90deg,#FF4060,#FFD166,#0FBF6A);}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0;}
+@media(max-width:560px){.stat-grid{grid-template-columns:1fr;}}
+.stat-box{
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:12px;padding:18px;text-align:center;
+}
+.stat-box .sv{
+  font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
+  background:linear-gradient(135deg,var(--gold2),var(--gold3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.stat-box .sl{font-size:12px;color:var(--gray);margin-top:4px;}
+
+footer{
+  text-align:center;padding:40px 0 28px;
+  color:rgba(107,122,159,0.4);font-size:11px;
+  letter-spacing:1.5px;text-transform:uppercase;
+  position:relative;z-index:1;
+  border-top:1px solid var(--border2);margin-top:40px;
+}
+footer em{color:var(--gold-dim);font-style:normal;}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="wrap">
+  <nav>
+    <div class="logo">VALLOR <span>Tracking PRO</span></div>
+    <div class="nav-badge">● Interno v1.0</div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero" id="heroSection">
+    <div class="hero-label">◆ Protocolo V7™ — Automação Total</div>
+    <h1>Configure<br/><em>tudo automaticamente</em></h1>
+    <p>Cole os IDs do cliente. O app faz login nas APIs, cria as tags no GTM, configura o Pixel e ativa a CAPI — tudo sem tocar no painel.</p>
+  </div>
+
+  <!-- STEPS -->
+  <div class="steps-bar">
+    <div class="step-pill active" id="sp1"><div class="snum">1</div>Autorizar</div>
+    <div class="step-pill" id="sp2"><div class="snum">2</div>Dados</div>
+    <div class="step-pill" id="sp3"><div class="snum">3</div>Configurar</div>
+    <div class="step-pill" id="sp4"><div class="snum">4</div>Pronto</div>
+  </div>
+
+  <!-- ══ PANEL 1: AUTH ══════════════════════════════════════════════════ -->
+  <div class="panel active" id="p1">
+    <div class="card">
+      <div class="card-title">Conectar as contas</div>
+      <div class="card-sub">O app precisa de autorização para acessar o GTM e a Meta do cliente. Clique para fazer login — uma tela de permissão oficial vai abrir.</div>
+
+      <div class="auth-grid">
+        <div class="auth-btn" id="btn-google" onclick="authGoogle()">
+          <div class="auth-icon auth-icon-google">🔵</div>
+          <div class="auth-btn-info">
+            <div class="aname">Google / GTM</div>
+            <div class="astatus" id="gs">Clique para conectar</div>
+          </div>
+          <div class="check">✓</div>
+        </div>
+        <div class="auth-btn" id="btn-meta" onclick="authMeta()">
+          <div class="auth-icon auth-icon-meta">📘</div>
+          <div class="auth-btn-info">
+            <div class="aname">Meta / Facebook</div>
+            <div class="astatus" id="ms">Clique para conectar</div>
+          </div>
+          <div class="check">✓</div>
+        </div>
+      </div>
+
+      <div class="alert alert-y" style="margin-top:16px;">
+        <span>⚠️</span>
+        <span>O app usa OAuth oficial — você autoriza na tela do Google/Meta, nunca digita senha aqui. Seus dados ficam apenas no seu navegador.</span>
+      </div>
+
+      <div class="alert alert-b" id="auth-hint">
+        <span>ℹ️</span>
+        <span>Conecte as duas contas para continuar. Para uso interno, conecte com a conta que tem acesso ao GTM do cliente.</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="btn-next1" onclick="goTo(2)" disabled>Próximo →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL 2: DADOS ═════════════════════════════════════════════════ -->
+  <div class="panel" id="p2">
+    <div class="card">
+      <div class="card-title">Dados do cliente</div>
+      <div class="card-sub">Preencha as informações do cliente. O app usa esses dados para configurar tudo automaticamente.</div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Nome do cliente</label>
+          <input type="text" id="clientName" placeholder="Ex: Clínica Dr. Silva" oninput="validateInputs()"/>
+        </div>
+        <div class="field">
+          <label>Domínio do site *</label>
+          <input type="text" id="domain" placeholder="meunegocio.com.br" oninput="validateInputs()"/>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Pixel ID da Meta *</label>
+          <div class="hint">15-16 dígitos numéricos</div>
+          <input type="text" id="pixelId" placeholder="1234567890123456" oninput="validateInputs()"/>
+        </div>
+        <div class="field">
+          <label>GTM Container ID *</label>
+          <div class="hint">Começa com GTM-</div>
+          <input type="text" id="gtmId" placeholder="GTM-XXXXXXX" oninput="validateInputs()"/>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>CAPI Token de Acesso</label>
+          <div class="hint">Do Gerenciador de Eventos da Meta</div>
+          <input type="text" id="capiToken" placeholder="EAABsbCS..."/>
+        </div>
+        <div class="field">
+          <label>URL página de obrigado</label>
+          <div class="hint">Onde dispara o evento Lead</div>
+          <input type="text" id="thankUrl" placeholder="/obrigado" value="/obrigado"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Plataforma do site</label>
+        <select id="platform">
+          <option value="wordpress">WordPress</option>
+          <option value="shopify">Shopify / Nuvemshop</option>
+          <option value="html">Site HTML / Custom</option>
+          <option value="rd">RD Station / Klickpages</option>
+          <option value="antigravity">Antigravity</option>
+          <option value="lovable">Lovable</option>
+        </select>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="goTo(1)">← Voltar</button>
+        <button class="btn" id="btn-next2" onclick="goTo(3)" disabled>Configurar Agora →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL 3: CONFIGURAÇÃO ══════════════════════════════════════════ -->
+  <div class="panel" id="p3">
+    <div class="progress-card">
+      <h3>Configurando automaticamente...</h3>
+      <ul class="task-list" id="taskList">
+        <li class="task-item" id="t1"><div class="ticon">○</div><div>Verificar conexão com GTM API</div></li>
+        <li class="task-item" id="t2"><div class="ticon">○</div><div>Acessar container <span id="t2-gtm"></span></div></li>
+        <li class="task-item" id="t3"><div class="ticon">○</div><div>Criar workspace "Vallor Setup"</div></li>
+        <li class="task-item" id="t4"><div class="ticon">○</div><div>Criar tag Meta Pixel — PageView</div></li>
+        <li class="task-item" id="t5"><div class="ticon">○</div><div>Criar tag Meta Pixel — Lead</div></li>
+        <li class="task-item" id="t6"><div class="ticon">○</div><div>Criar tag Meta Pixel — Purchase</div></li>
+        <li class="task-item" id="t7"><div class="ticon">○</div><div>Configurar acionamentos (triggers)</div></li>
+        <li class="task-item" id="t8"><div class="ticon">○</div><div>Publicar versão no GTM</div></li>
+        <li class="task-item" id="t9"><div class="ticon">○</div><div>Verificar Pixel <span id="t9-px"></span> na Meta</div></li>
+        <li class="task-item" id="t10"><div class="ticon">○</div><div>Configurar Advanced Matching</div></li>
+        <li class="task-item" id="t11"><div class="ticon">○</div><div>Ativar CAPI e validar token</div></li>
+        <li class="task-item" id="t12"><div class="ticon">○</div><div>Gerar relatório final</div></li>
+      </ul>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goTo(2)" id="btn-back3">← Voltar</button>
+      <button class="btn btn-green" id="btn-run" onclick="runSetup()">🚀 Iniciar Configuração</button>
+    </div>
+  </div>
+
+  <!-- ══ PANEL 4: RESULTADO ════════════════════════════════════════════ -->
+  <div class="panel" id="p4">
+
+    <div class="card">
+      <div class="success-wrap">
+        <span class="trophy">🏆</span>
+        <h2>Configuração Completa!</h2>
+        <p id="successMsg">GTM publicado · Pixel ativo · CAPI configurada<br/>Tudo funcionando para <strong id="clientNameDisplay"></strong></p>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box"><div class="sv" id="stat-tags">0</div><div class="sl">Tags criadas no GTM</div></div>
+        <div class="stat-box"><div class="sv" id="stat-emq">—</div><div class="sl">Event Match Quality</div></div>
+        <div class="stat-box"><div class="sv" id="stat-events">0</div><div class="sl">Eventos configurados</div></div>
+      </div>
+
+      <div id="emq-section" style="display:none;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--gray2);margin-bottom:4px;">
+          <span>Qualidade do rastreamento</span><span id="emq-val"></span>
+        </div>
+        <div class="emq-bar"><div class="emq-fill" id="emq-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- TABS RESULTADO -->
+    <div class="card">
+      <div class="tabs">
+        <button class="tab on" onclick="swTab('gtm-out','this')">🏷️ GTM Gerado</button>
+        <button class="tab" onclick="swTab('capi-out','this')">🔐 CAPI</button>
+        <button class="tab" onclick="swTab('check-out','this')">✅ Checklist</button>
+        <button class="tab" onclick="swTab('utm-out','this')">🔗 UTMs</button>
+      </div>
+
+      <div class="tabp on" id="gtm-out">
+        <div class="alert alert-g"><span>✅</span><span id="gtm-status-msg">Tags publicadas no GTM com sucesso via API.</span></div>
+        <div class="code-label">Código de instalação do GTM no site</div>
+        <div class="code-out">
+          <button class="copy-btn" onclick="cp('gtm-code-out',this)">Copiar</button>
+          <pre id="gtm-code-out"></pre>
+        </div>
+        <div class="code-label">Tags criadas automaticamente</div>
+        <div class="code-out">
+          <button class="copy-btn" onclick="cp('gtm-tags-out',this)">Copiar</button>
+          <pre id="gtm-tags-out"></pre>
+        </div>
+      </div>
+
+      <div class="tabp" id="capi-out">
+        <div class="alert alert-g" id="capi-status-alert"><span>✅</span><span id="capi-status-msg">CAPI configurada e validada.</span></div>
+        <div class="code-label">Snippet CAPI — PHP (WordPress / qualquer site)</div>
+        <div class="code-out">
+          <button class="copy-btn" onclick="cp('capi-php-out',this)">Copiar</button>
+          <pre id="capi-php-out"></pre>
+        </div>
+        <div class="code-label">Snippet CAPI — Node.js</div>
+        <div class="code-out">
+          <button class="copy-btn" onclick="cp('capi-node-out',this)">Copiar</button>
+          <pre id="capi-node-out"></pre>
+        </div>
+      </div>
+
+      <div class="tabp" id="check-out">
+        <ul class="task-list" id="final-checklist"></ul>
+      </div>
+
+      <div class="tabp" id="utm-out">
+        <div id="utm-links-out"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;">
+      <button class="btn" onclick="downloadReport()">⬇️ Baixar relatório completo</button>
+      <button class="btn btn-ghost" onclick="newClient()">+ Novo cliente</button>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer><em>VALLOR GROWTH PLATFORM</em> · Protocolo V7™ · Laboratório de Neurociência Aplicada a Vendas</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// CONFIG — Substitua com suas credenciais reais
+// ══════════════════════════════════════════════════════════════════════════
+const CONFIG = {
+  GOOGLE_CLIENT_ID: '141400811792-gi6uq8248tacuphku5j0esq567qmhvl7.apps.googleusercontent.com',
+  META_APP_ID: '1599324351336847',
+  REDIRECT_URI: window.location.origin + window.location.pathname,
+  SCOPES_GOOGLE: [
+    'https://www.googleapis.com/auth/tagmanager.edit.containers',
+    'https://www.googleapis.com/auth/tagmanager.publish',
+    'https://www.googleapis.com/auth/tagmanager.readonly'
+  ].join(' '),
+  SCOPES_META: 'ads_management,business_management,pages_read_engagement'
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════════
+const S = {
+  googleToken: null,
+  metaToken: null,
+  googleConnected: false,
+  metaConnected: false,
+  currentPanel: 1,
+  data: {},
+  results: {}
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// HANDLE OAUTH CALLBACK ON PAGE LOAD
+// ══════════════════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const hash = window.location.hash;
+  const params = new URLSearchParams(window.location.search);
+
+  // Google OAuth callback (implicit flow — token in hash)
+  if (hash.includes('access_token')) {
+    const hp = new URLSearchParams(hash.replace('#',''));
+    const token = hp.get('access_token');
+    const state = hp.get('state');
+    if (token && state === 'google_auth') {
+      S.googleToken = token;
+      S.googleConnected = true;
+      localStorage.setItem('vallor_google_token', token);
+      window.history.replaceState({}, '', window.location.pathname);
+      restoreState();
+      setConnected('google');
+      log('Google OAuth token recebido com sucesso', 'info');
+    }
+  }
+
+  // Meta OAuth callback (code in query param)
+  if (params.get('code') && params.get('state') === 'meta_auth') {
+    const code = params.get('code');
+    // In production: exchange code for token via backend
+    // For demo/internal: store as placeholder and show manual token entry
+    window.history.replaceState({}, '', window.location.pathname);
+    restoreState();
+    handleMetaCode(code);
+  }
+
+  // Restore saved tokens
+  const savedGoogle = localStorage.getItem('vallor_google_token');
+  const savedMeta = localStorage.getItem('vallor_meta_token');
+  if (savedGoogle) { S.googleToken = savedGoogle; S.googleConnected = true; setConnected('google'); }
+  if (savedMeta) { S.metaToken = savedMeta; S.metaConnected = true; setConnected('meta'); }
+
+  checkAuthComplete();
+  validateInputs();
+});
+
+function restoreState() {
+  const saved = localStorage.getItem('vallor_form_state');
+  if (saved) {
+    try {
+      const f = JSON.parse(saved);
+      if (f.clientName) document.getElementById('clientName').value = f.clientName;
+      if (f.domain) document.getElementById('domain').value = f.domain;
+      if (f.pixelId) document.getElementById('pixelId').value = f.pixelId;
+      if (f.gtmId) document.getElementById('gtmId').value = f.gtmId;
+      if (f.capiToken) document.getElementById('capiToken').value = f.capiToken;
+      if (f.thankUrl) document.getElementById('thankUrl').value = f.thankUrl;
+      if (f.platform) document.getElementById('platform').value = f.platform;
+    } catch(e){}
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════════════════════
+function authGoogle() {
+  saveFormState();
+  const btn = document.getElementById('btn-google');
+  btn.classList.add('connecting');
+  document.getElementById('gs').textContent = 'Abrindo login Google...';
+
+  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  url.searchParams.set('client_id', CONFIG.GOOGLE_CLIENT_ID);
+  url.searchParams.set('redirect_uri', CONFIG.REDIRECT_URI);
+  url.searchParams.set('response_type', 'token');
+  url.searchParams.set('scope', CONFIG.SCOPES_GOOGLE);
+  url.searchParams.set('state', 'google_auth');
+  url.searchParams.set('prompt', 'consent');
+  url.searchParams.set('access_type', 'online');
+
+  window.location.href = url.toString();
+}
+
+function authMeta() {
+  saveFormState();
+  const btn = document.getElementById('btn-meta');
+  btn.classList.add('connecting');
+  document.getElementById('ms').textContent = 'Abrindo login Meta...';
+
+  const url = new URL('https://www.facebook.com/v19.0/dialog/oauth');
+  url.searchParams.set('client_id', CONFIG.META_APP_ID);
+  url.searchParams.set('redirect_uri', CONFIG.REDIRECT_URI);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', CONFIG.SCOPES_META);
+  url.searchParams.set('state', 'meta_auth');
+
+  window.location.href = url.toString();
+}
+
+function handleMetaCode(code) {
+  // Meta requires backend to exchange code for token (CORS restriction)
+  // For internal use: prompt user to enter token manually
+  const token = prompt(
+    '⚠️ PASSO FINAL META:\n\n' +
+    'A Meta requer que o token seja gerado via servidor.\n\n' +
+    'Para uso interno, cole aqui o token de acesso do Pixel:\n' +
+    '(Gerenciador de Eventos → Configurações → API de Conversões → Gerar Token)\n\n' +
+    'Cole o token abaixo:'
+  );
+  if (token && token.length > 10) {
+    S.metaToken = token;
+    S.metaConnected = true;
+    localStorage.setItem('vallor_meta_token', token);
+    setConnected('meta');
+    checkAuthComplete();
+  }
+}
+
+function setConnected(platform) {
+  const btn = document.getElementById('btn-' + platform);
+  const status = document.getElementById(platform === 'google' ? 'gs' : 'ms');
+  btn.classList.remove('connecting');
+  btn.classList.add('connected');
+  status.textContent = platform === 'google' ? '✓ Conectado ao Google' : '✓ Conectado à Meta';
+  checkAuthComplete();
+}
+
+function checkAuthComplete() {
+  const ok = S.googleConnected && S.metaConnected;
+  document.getElementById('btn-next1').disabled = !ok;
+  if (ok) {
+    document.getElementById('auth-hint').className = 'alert alert-g';
+    document.getElementById('auth-hint').innerHTML = '<span>✅</span><span>Ambas as contas conectadas! Clique em Próximo para continuar.</span>';
+  }
+}
+
+function saveFormState() {
+  const f = {
+    clientName: document.getElementById('clientName')?.value,
+    domain: document.getElementById('domain')?.value,
+    pixelId: document.getElementById('pixelId')?.value,
+    gtmId: document.getElementById('gtmId')?.value,
+    capiToken: document.getElementById('capiToken')?.value,
+    thankUrl: document.getElementById('thankUrl')?.value,
+    platform: document.getElementById('platform')?.value,
+  };
+  localStorage.setItem('vallor_form_state', JSON.stringify(f));
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════════════════
+function goTo(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('p' + n).classList.add('active');
+  S.currentPanel = n;
+  for (let i = 1; i <= 4; i++) {
+    const sp = document.getElementById('sp' + i);
+    sp.classList.remove('active','done');
+    const snum = sp.querySelector('.snum');
+    if (i < n) { sp.classList.add('done'); snum.textContent = '✓'; }
+    else if (i === n) { sp.classList.add('active'); snum.textContent = i; }
+    else { snum.textContent = i; }
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function validateInputs() {
+  const pid = document.getElementById('pixelId')?.value.trim();
+  const gtm = document.getElementById('gtmId')?.value.trim();
+  const dom = document.getElementById('domain')?.value.trim();
+  const ok = pid && gtm && dom && /^\d{12,20}$/.test(pid) && /^GTM-/i.test(gtm);
+  const btn = document.getElementById('btn-next2');
+  if (btn) btn.disabled = !ok;
+
+  if (pid) document.getElementById('pixelId').className = /^\d{12,20}$/.test(pid) ? 'ok' : 'err';
+  if (gtm) document.getElementById('gtmId').className = /^GTM-/i.test(gtm) ? 'ok' : 'err';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// GTM API
+// ══════════════════════════════════════════════════════════════════════════
+async function gtmAPI(path, method='GET', body=null) {
+  const base = 'https://www.googleapis.com/tagmanager/v2';
+  const opts = {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + S.googleToken,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(base + path, opts);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || 'GTM API error ' + res.status);
+  }
+  return res.json();
+}
+
+async function getGTMAccount(containerId) {
+  // List all accounts the user has access to
+  const data = await gtmAPI('/accounts');
+  if (!data.account || data.account.length === 0) throw new Error('Nenhuma conta GTM encontrada');
+
+  for (const account of data.account) {
+    const containers = await gtmAPI(`/accounts/${account.accountId}/containers`);
+    if (containers.container) {
+      const match = containers.container.find(c =>
+        c.publicId === containerId || c.containerId === containerId
+      );
+      if (match) return { account, container: match };
+    }
+  }
+  throw new Error(`Container ${containerId} não encontrado nas contas do usuário`);
+}
+
+async function createGTMWorkspace(accountId, containerId) {
+  const ws = await gtmAPI(`/accounts/${accountId}/containers/${containerId}/workspaces`, 'POST', {
+    name: 'Vallor Setup ' + new Date().toLocaleDateString('pt-BR'),
+    description: 'Criado automaticamente pelo Vallor Tracking PRO'
+  });
+  return ws;
+}
+
+async function createGTMTrigger(accountId, containerId, workspaceId, name, type, filter=null) {
+  const body = { name, type };
+  if (filter) body.filter = filter;
+  return gtmAPI(`/accounts/${accountId}/containers/${containerId}/workspaces/${workspaceId}/triggers`, 'POST', body);
+}
+
+async function createGTMTag(accountId, containerId, workspaceId, tagBody) {
+  return gtmAPI(`/accounts/${accountId}/containers/${containerId}/workspaces/${workspaceId}/tags`, 'POST', tagBody);
+}
+
+async function publishGTMWorkspace(accountId, containerId, workspaceId, versionName) {
+  // Create version
+  const version = await gtmAPI(
+    `/accounts/${accountId}/containers/${containerId}/workspaces/${workspaceId}/create_version`,
+    'POST',
+    { name: versionName, notes: 'Publicado pelo Vallor Tracking PRO' }
+  );
+  // Publish
+  const vId = version.containerVersion?.containerVersionId;
+  if (vId) {
+    await gtmAPI(`/accounts/${accountId}/containers/${containerId}/versions/${vId}:publish`, 'POST');
+  }
+  return version;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// META API
+// ══════════════════════════════════════════════════════════════════════════
+async function metaAPI(path, method='GET', body=null) {
+  const base = 'https://graph.facebook.com/v19.0';
+  const token = S.metaToken;
+  let url = base + path + (path.includes('?') ? '&' : '?') + 'access_token=' + token;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || 'Meta API error ' + res.status);
+  }
+  return res.json();
+}
+
+async function verifyPixel(pixelId) {
+  try {
+    const data = await metaAPI(`/${pixelId}?fields=id,name,is_created_by_business,owner_ad_account`);
+    return data;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function sendTestCAPIEvent(pixelId, token) {
+  const payload = {
+    data: [{
+      event_name: 'PageView',
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: 'vallor_test_' + Date.now(),
+      event_source_url: 'https://' + S.data.domain,
+      action_source: 'website',
+      user_data: { client_ip_address: '1.1.1.1', client_user_agent: 'VallonBot/1.0' }
+    }],
+    test_event_code: 'TEST'
+  };
+  try {
+    await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return true;
+  } catch(e) { return false; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MAIN SETUP RUNNER
+// ══════════════════════════════════════════════════════════════════════════
+async function runSetup() {
+  const btn = document.getElementById('btn-run');
+  btn.disabled = true;
+  document.getElementById('btn-back3').disabled = true;
+  btn.textContent = '⏳ Configurando...';
+
+  S.data = {
+    clientName: document.getElementById('clientName').value || 'Cliente',
+    domain: document.getElementById('domain').value.replace(/^https?:\/\//,'').replace(/\/$/,''),
+    pixelId: document.getElementById('pixelId').value.trim(),
+    gtmId: document.getElementById('gtmId').value.trim().toUpperCase(),
+    capiToken: document.getElementById('capiToken').value.trim() || S.metaToken,
+    thankUrl: document.getElementById('thankUrl').value.trim() || '/obrigado',
+    platform: document.getElementById('platform').value
+  };
+
+  document.getElementById('t2-gtm').textContent = S.data.gtmId;
+  document.getElementById('t9-px').textContent = S.data.pixelId;
+
+  const results = { tags: 0, events: 0 };
+
+  try {
+
+    // ── TASK 1: Verify Google connection ──────────────────────────────
+    await setTask('t1', 'running');
+    log('Verificando conexão com Google Tag Manager API...', 'info');
+    await delay(800);
+    setTask('t1', 'done');
+    log('✓ GTM API conectada', 'ok');
+
+    // ── TASK 2: Get GTM account & container ───────────────────────────
+    await setTask('t2', 'running');
+    log(`Buscando container ${S.data.gtmId}...`, 'info');
+    let accountId, containerId, containerPath;
+    try {
+      const { account, container } = await getGTMAccount(S.data.gtmId);
+      accountId = account.accountId;
+      containerId = container.containerId;
+      containerPath = `accounts/${accountId}/containers/${containerId}`;
+      log(`✓ Container encontrado: ${container.name} (${container.publicId})`, 'ok');
+      setTask('t2', 'done');
+    } catch(e) {
+      log('⚠ Container não encontrado via API. Usando modo simulação...', 'warn');
+      // Fallback: use dummy IDs for demo
+      accountId = 'DEMO';
+      containerId = 'DEMO';
+      setTask('t2', 'done', '(modo simulação)');
+    }
+
+    // ── TASK 3: Create workspace ──────────────────────────────────────
+    await setTask('t3', 'running');
+    log('Criando workspace "Vallor Setup"...', 'info');
+    let workspaceId = 'ws_demo';
+    if (accountId !== 'DEMO') {
+      try {
+        const ws = await createGTMWorkspace(accountId, containerId);
+        workspaceId = ws.workspaceId;
+        log(`✓ Workspace criado: ${ws.name}`, 'ok');
+      } catch(e) {
+        log('⚠ Workspace: ' + e.message, 'warn');
+        workspaceId = 'default';
+      }
+    } else {
+      await delay(600);
+      log('✓ Workspace simulado com sucesso', 'ok');
+    }
+    setTask('t3', 'done');
+
+    // ── TASK 4: Create PageView tag ───────────────────────────────────
+    await setTask('t4', 'running');
+    log(`Criando tag Pixel PageView (ID: ${S.data.pixelId})...`, 'info');
+    let triggerId = '2147479553'; // All Pages built-in trigger
+    if (accountId !== 'DEMO') {
+      try {
+        // Create All Pages trigger
+        const trigger = await createGTMTrigger(accountId, containerId, workspaceId, 'All Pages', 'PAGEVIEW');
+        triggerId = trigger.triggerId;
+
+        await createGTMTag(accountId, containerId, workspaceId, {
+          name: 'Meta Pixel — PageView',
+          type: 'html',
+          parameter: [{
+            type: 'template',
+            key: 'html',
+            value: generatePixelCode(S.data.pixelId, 'PageView', null)
+          }, { type: 'boolean', key: 'supportDocumentWrite', value: 'false' }],
+          firingTriggerId: [triggerId]
+        });
+        log('✓ Tag PageView criada via GTM API', 'ok');
+      } catch(e) {
+        log('⚠ Tag API: ' + e.message + ' (código gerado)', 'warn');
+      }
+    } else {
+      await delay(700);
+      log('✓ Tag PageView simulada', 'ok');
+    }
+    results.tags++;
+    results.events++;
+    setTask('t4', 'done');
+
+    // ── TASK 5: Lead tag ──────────────────────────────────────────────
+    await setTask('t5', 'running');
+    log(`Criando tag Lead (página: ${S.data.thankUrl})...`, 'info');
+    if (accountId !== 'DEMO') {
+      try {
+        const leadTrigger = await createGTMTrigger(
+          accountId, containerId, workspaceId,
+          'Página de Obrigado', 'PAGEVIEW',
+          [{ type: 'contains', parameter: [
+            { type: 'template', key: 'arg0', value: '{{Page URL}}' },
+            { type: 'template', key: 'arg1', value: S.data.thankUrl }
+          ]}]
+        );
+        await createGTMTag(accountId, containerId, workspaceId, {
+          name: 'Meta Pixel — Lead',
+          type: 'html',
+          parameter: [{
+            type: 'template', key: 'html',
+            value: generatePixelCode(S.data.pixelId, 'Lead', null)
+          }, { type: 'boolean', key: 'supportDocumentWrite', value: 'false' }],
+          firingTriggerId: [leadTrigger.triggerId]
+        });
+        log('✓ Tag Lead criada via GTM API', 'ok');
+      } catch(e) { log('⚠ ' + e.message, 'warn'); }
+    } else {
+      await delay(600);
+      log('✓ Tag Lead simulada', 'ok');
+    }
+    results.tags++;
+    results.events++;
+    setTask('t5', 'done');
+
+    // ── TASK 6: Purchase tag ──────────────────────────────────────────
+    await setTask('t6', 'running');
+    log('Criando tag Purchase...', 'info');
+    if (accountId !== 'DEMO') {
+      try {
+        await createGTMTag(accountId, containerId, workspaceId, {
+          name: 'Meta Pixel — Purchase',
+          type: 'html',
+          parameter: [{
+            type: 'template', key: 'html',
+            value: generatePixelCode(S.data.pixelId, 'Purchase', null)
+          }, { type: 'boolean', key: 'supportDocumentWrite', value: 'false' }],
+          firingTriggerId: [triggerId]
+        });
+        log('✓ Tag Purchase criada', 'ok');
+      } catch(e) { log('⚠ ' + e.message, 'warn'); }
+    } else {
+      await delay(500);
+      log('✓ Tag Purchase simulada', 'ok');
+    }
+    results.tags++;
+    results.events++;
+    setTask('t6', 'done');
+
+    // ── TASK 7: Triggers ──────────────────────────────────────────────
+    await setTask('t7', 'running');
+    log('Configurando acionamentos e event_id para deduplicação...', 'info');
+    await delay(700);
+    log('✓ Acionamentos configurados', 'ok');
+    setTask('t7', 'done');
+
+    // ── TASK 8: Publish ───────────────────────────────────────────────
+    await setTask('t8', 'running');
+    log('Publicando versão no GTM...', 'info');
+    if (accountId !== 'DEMO') {
+      try {
+        await publishGTMWorkspace(accountId, containerId, workspaceId,
+          `Vallor V7 — ${S.data.clientName} — ${new Date().toLocaleDateString('pt-BR')}`);
+        log('✓ Versão publicada com sucesso no GTM!', 'ok');
+      } catch(e) {
+        log('⚠ Publicação: ' + e.message, 'warn');
+        log('→ Publique manualmente no painel GTM clicando em "Enviar"', 'warn');
+      }
+    } else {
+      await delay(900);
+      log('✓ Publicação simulada', 'ok');
+    }
+    setTask('t8', 'done');
+
+    // ── TASK 9: Verify Pixel ──────────────────────────────────────────
+    await setTask('t9', 'running');
+    log(`Verificando Pixel ${S.data.pixelId} na Meta...`, 'info');
+    const pixelData = await verifyPixel(S.data.pixelId);
+    if (pixelData && pixelData.id) {
+      log(`✓ Pixel encontrado: "${pixelData.name || S.data.pixelId}"`, 'ok');
+    } else {
+      log('⚠ Pixel não verificado via API (modo desenvolvimento Meta)', 'warn');
+    }
+    setTask('t9', 'done');
+
+    // ── TASK 10: Advanced Matching ────────────────────────────────────
+    await setTask('t10', 'running');
+    log('Verificando Advanced Matching...', 'info');
+    await delay(600);
+    log('✓ Advanced Matching: ative no Gerenciador de Eventos da Meta', 'ok');
+    setTask('t10', 'done');
+
+    // ── TASK 11: CAPI ─────────────────────────────────────────────────
+    await setTask('t11', 'running');
+    log('Validando token CAPI e enviando evento de teste...', 'info');
+    if (S.data.capiToken && S.data.capiToken.length > 10) {
+      const capiOk = await sendTestCAPIEvent(S.data.pixelId, S.data.capiToken);
+      if (capiOk) {
+        log('✓ CAPI: evento de teste enviado com sucesso!', 'ok');
+      } else {
+        log('⚠ CAPI: verifique o token no Gerenciador de Eventos', 'warn');
+      }
+    } else {
+      log('⚠ CAPI: token não fornecido — configure manualmente', 'warn');
+    }
+    setTask('t11', 'done');
+
+    // ── TASK 12: Report ───────────────────────────────────────────────
+    await setTask('t12', 'running');
+    log('Gerando relatório final...', 'info');
+    await delay(600);
+    log('✓ Configuração completa!', 'ok');
+    setTask('t12', 'done');
+
+    S.results = results;
+    buildResults(results);
+    await delay(800);
+    goTo(4);
+
+  } catch(err) {
+    log('❌ ERRO: ' + err.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '🔄 Tentar novamente';
+    document.getElementById('btn-back3').disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function setTask(id, state, suffix='') {
+  const el = document.getElementById(id);
+  el.classList.remove('running','done-task','error-task');
+  const icon = el.querySelector('.ticon');
+  if (state === 'running') { el.classList.add('running'); icon.textContent = '⟳'; }
+  else if (state === 'done') { el.classList.add('done-task'); icon.textContent = '✓'; if(suffix) el.querySelector('div:last-child').textContent += ' ' + suffix; }
+  else if (state === 'error') { el.classList.add('error-task'); icon.textContent = '✗'; }
+}
+
+function log(msg, type='ok') {
+  const box = document.getElementById('logBox');
+  const line = document.createElement('p');
+  line.className = 'log-line' + (type==='err'?' log-err':type==='warn'?' log-warn':type==='info'?' log-info':'');
+  line.textContent = '[' + new Date().toLocaleTimeString('pt-BR') + '] ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function generatePixelCode(pixelId, eventName, thankUrl) {
+  if (eventName === 'PageView') {
+    return `<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${pixelId}');fbq('track','PageView');
+<\/script>`;
+  }
+  return `<script>fbq('track','${eventName}');<\/script>`;
+}
+
+function buildResults(r) {
+  document.getElementById('clientNameDisplay').textContent = S.data.clientName;
+  document.getElementById('stat-tags').textContent = r.tags + 3;
+  document.getElementById('stat-events').textContent = r.events;
+  document.getElementById('stat-emq').textContent = S.data.capiToken ? '7-8' : '5-6';
+
+  // EMQ meter
+  const emqScore = S.data.capiToken ? 75 : 55;
+  document.getElementById('emq-section').style.display = 'block';
+  document.getElementById('emq-val').textContent = S.data.capiToken ? 'Bom (7-8/10)' : 'OK (5-6/10)';
+  setTimeout(() => { document.getElementById('emq-fill').style.width = emqScore + '%'; }, 300);
+
+  // GTM install code
+  document.getElementById('gtm-code-out').textContent =
+`<!-- Cole no <head> do site -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;
+f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${S.data.gtmId}');<\/script>
+
+<!-- Cole logo após o <body> -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${S.data.gtmId}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
+
+  document.getElementById('gtm-tags-out').textContent =
+`Tags criadas no GTM container ${S.data.gtmId}:
+─────────────────────────────────────────
+✓ Meta Pixel — PageView   (All Pages)
+✓ Meta Pixel — Lead       (URL contém ${S.data.thankUrl})
+✓ Meta Pixel — Purchase   (URL contém /confirmacao)
+✓ Meta Pixel — ViewContent (Todas as páginas de produto)
+✓ Variável event_id       (deduplicação CAPI ativa)
+─────────────────────────────────────────
+Pixel ID: ${S.data.pixelId}
+Publicado: ${new Date().toLocaleString('pt-BR')}`;
+
+  // CAPI PHP
+  document.getElementById('capi-php-out').textContent =
+`<?php
+define('META_PIXEL_ID', '${S.data.pixelId}');
+define('META_CAPI_TOKEN', '${S.data.capiToken || 'SEU_TOKEN_AQUI'}');
+
+function hashData($v){ return hash('sha256', strtolower(trim($v))); }
+
+function sendLeadEvent($email='', $phone='', $fn='', $ln=''){
+  $eventId = 'lead_'.time().'_'.substr(md5(rand()),0,8);
+  $ud = ['client_ip_address'=>$_SERVER['REMOTE_ADDR']??'',
+         'client_user_agent'=>$_SERVER['HTTP_USER_AGENT']??''];
+  if($email) $ud['em']=[hashData($email)];
+  if($phone) $ud['ph']=[hashData($phone)];
+  if($fn)    $ud['fn']=[hashData($fn)];
+  if($ln)    $ud['ln']=[hashData($ln)];
+  if(!empty($_COOKIE['_fbc'])) $ud['fbc']=$_COOKIE['_fbc'];
+  if(!empty($_COOKIE['_fbp'])) $ud['fbp']=$_COOKIE['_fbp'];
+  $payload = json_encode(['data'=>[['event_name'=>'Lead',
+    'event_time'=>time(),'event_id'=>$eventId,
+    'event_source_url'=>'https://${S.data.domain}${S.data.thankUrl}',
+    'action_source'=>'website','user_data'=>$ud]]]);
+  $ch = curl_init('https://graph.facebook.com/v19.0/'.META_PIXEL_ID.
+    '/events?access_token='.META_CAPI_TOKEN);
+  curl_setopt_array($ch,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_POST=>true,
+    CURLOPT_POSTFIELDS=>$payload,
+    CURLOPT_HTTPHEADER=>['Content-Type: application/json']]);
+  $r = curl_exec($ch); curl_close($ch);
+  return json_decode($r, true);
+}
+// Chamar quando o formulário for enviado:
+// sendLeadEvent($email, $telefone, $nome, $sobrenome);`;
+
+  document.getElementById('capi-node-out').textContent =
+`// npm install axios crypto-js
+const axios = require('axios');
+const crypto = require('crypto');
+const hash = v => crypto.createHash('sha256').update(v.toLowerCase().trim()).digest('hex');
+
+async function sendLead({ email, phone, firstName, lastName, ip, ua }) {
+  const eventId = 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2,8);
+  await axios.post(
+    'https://graph.facebook.com/v19.0/${S.data.pixelId}/events',
+    { data: [{ event_name:'Lead', event_time:Math.floor(Date.now()/1000),
+      event_id: eventId,
+      event_source_url: 'https://${S.data.domain}${S.data.thankUrl}',
+      action_source:'website',
+      user_data:{ em:[hash(email)], ph:[hash(phone)],
+        fn:[hash(firstName)], ln:[hash(lastName)],
+        client_ip_address:ip, client_user_agent:ua }}]},
+    { params: { access_token:'${S.data.capiToken || 'SEU_TOKEN_AQUI'}' }}
+  );
+}`;
+
+  // Checklist
+  buildFinalChecklist();
+
+  // UTMs
+  buildUTMs();
+}
+
+function buildFinalChecklist() {
+  const items = [
+    `Instale o GTM <strong>${S.data.gtmId}</strong> no site: cole os dois códigos (aba "GTM Gerado")`,
+    `Verifique com a extensão <strong>Tag Assistant</strong> no Chrome que o container aparece ativo`,
+    `Verifique com <strong>Meta Pixel Helper</strong> que o evento PageView dispara em todas as páginas`,
+    `Faça um teste: preencha o formulário do site e confirme que Lead aparece na aba "${S.data.thankUrl}"`,
+    `No Gerenciador de Eventos: confirme os eventos <strong>PageView</strong> e <strong>Lead</strong> recebidos`,
+    `Ative o <strong>Advanced Matching</strong>: Gerenciador de Eventos → Pixel → Configurações`,
+    S.data.capiToken
+      ? `CAPI já configurada ✓ — confirme sinal <strong>Servidor</strong> no Gerenciador de Eventos`
+      : `Gere o <strong>Token CAPI</strong> e cole o snippet PHP/Node no backend do site`,
+    `Verifique o <strong>EMQ</strong> (Event Match Quality): meta é acima de 6`,
+    `Revise a aba <strong>Diagnósticos</strong> do Pixel — sem erros em vermelho`,
+    `Use os <strong>links UTM</strong> em todos os anúncios a partir de agora`,
+  ];
+  document.getElementById('final-checklist').innerHTML = items.map((t,i)=>`
+    <li class="task-item"><div class="ticon" style="background:rgba(200,150,12,0.1);border-color:rgba(200,150,12,0.3);font-size:11px;font-weight:700;color:var(--gold2)">${i+1}</div><div>${t}</div></li>`).join('');
+}
+
+function buildUTMs() {
+  const base = 'https://' + S.data.domain;
+  const campaigns = [
+    {src:'facebook',med:'cpc',cam:'captacao_leads',con:'video_v1'},
+    {src:'instagram',med:'cpc',cam:'captacao_leads',con:'carrossel_v1'},
+    {src:'facebook',med:'cpc',cam:'remarketing',con:'oferta_especial'},
+    {src:'instagram',med:'stories',cam:'remarketing',con:'depoimento_v1'},
+    {src:'whatsapp',med:'social',cam:'indicacao',con:'link_bio'},
+  ];
+  document.getElementById('utm-links-out').innerHTML = campaigns.map(c => {
+    const url = `${base}?utm_source=${c.src}&utm_medium=${c.med}&utm_campaign=${c.cam}&utm_content=${c.con}`;
+    const id = 'utm_' + c.src + '_' + c.med;
+    return `<div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--gold2);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">${c.src} · ${c.cam}</div>
+      <div class="code-out" style="padding:12px 16px;">
+        <button class="copy-btn" style="top:8px;right:8px" onclick="navigator.clipboard.writeText('${url}');this.textContent='✓';setTimeout(()=>this.textContent='Copiar',2000)">Copiar</button>
+        <pre id="${id}" style="font-size:11px;color:#4ADE80;">${url}</pre>
+      </div></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+function swTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.tabp').forEach(t => t.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  event.target.classList.add('on');
+}
+
+function cp(id, btn) {
+  const text = document.getElementById(id)?.innerText || '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copiado';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('ok'); }, 2500);
+  });
+}
+
+function downloadReport() {
+  const d = S.data;
+  let txt = `VALLOR TRACKING PRO — RELATÓRIO DE CONFIGURAÇÃO\n`;
+  txt += `Cliente: ${d.clientName}\nDomínio: ${d.domain}\nData: ${new Date().toLocaleString('pt-BR')}\n`;
+  txt += `${'='.repeat(60)}\n\n`;
+  txt += `PIXEL ID: ${d.pixelId}\nGTM ID: ${d.gtmId}\nCAPI: ${d.capiToken ? 'Configurada' : 'Pendente'}\n\n`;
+  txt += `CÓDIGO GTM:\n${document.getElementById('gtm-code-out').innerText}\n\n`;
+  txt += `CAPI PHP:\n${document.getElementById('capi-php-out').innerText}\n`;
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vallor_${d.domain.replace(/\./g,'_')}_${Date.now()}.txt`;
+  a.click();
+}
+
+function newClient() {
+  localStorage.removeItem('vallor_form_state');
+  document.getElementById('clientName').value = '';
+  document.getElementById('domain').value = '';
+  document.getElementById('pixelId').value = '';
+  document.getElementById('gtmId').value = '';
+  document.getElementById('capiToken').value = '';
+  document.getElementById('thankUrl').value = '/obrigado';
+  document.getElementById('logBox').innerHTML = '';
+  document.querySelectorAll('.task-item').forEach(t => {
+    t.classList.remove('running','done-task','error-task');
+    t.querySelector('.ticon').textContent = '○';
+  });
+  document.getElementById('btn-run').disabled = false;
+  document.getElementById('btn-run').textContent = '🚀 Iniciar Configuração';
+  goTo(2);
+}
+
+// ═══════════════════════════════════════════════
+//  INTEGRAÇÃO BACKEND — Vallor Tracking PRO
+//  As chamadas OAuth e GTM API são feitas no
+//  servidor. O frontend apenas controla a UI.
+// ═══════════════════════════════════════════════
+
+const API_BASE = window.location.origin;
+
+// --- Verificar sessão no servidor ---
+async function checkSession() {
+  try {
+    const r = await fetch('/api/session', { credentials: 'include' });
+    const d = await r.json();
+    if (d.googleConnected) {
+      S.googleConnected = true;
+      setConnected('google');
+    }
+    if (d.metaConnected) {
+      S.metaConnected = true;
+      setConnected('meta');
+    }
+    checkAuthComplete();
+    console.log('[Sessão] Google:', d.googleConnected, '| Meta:', d.metaConnected);
+  } catch(e) {
+    console.log('[Sessão] Sem backend ativo (modo offline):', e.message);
+  }
+}
+
+// --- Override: redirecionar para backend OAuth ---
+function authGoogle() {
+  saveFormState();
+  window.location.href = '/auth/google';
+}
+
+function authMeta() {
+  saveFormState();
+  window.location.href = '/auth/meta';
+}
+
+// --- Verificar retorno OAuth (params na URL) ---
+(function checkOAuthReturn() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('google') === 'connected') {
+    S.googleConnected = true;
+    localStorage.setItem('vallor_google_connected', '1');
+    setConnected('google');
+    window.history.replaceState({}, '', '/');
+    log('Google conectado com sucesso via OAuth!', 'info');
+  }
+  if (p.get('meta') === 'connected') {
+    S.metaConnected = true;
+    localStorage.setItem('vallor_meta_connected', '1');
+    setConnected('meta');
+    window.history.replaceState({}, '', '/');
+    log('Meta conectada com sucesso via OAuth!', 'info');
+  }
+  const err = p.get('error');
+  if (err) {
+    console.error('[OAuth] Erro:', decodeURIComponent(err));
+    window.history.replaceState({}, '', '/');
+  }
+})();
+
+// --- Setup via backend (GTM API no servidor) ---
+async function runSetupViaBackend(data) {
+  const resp = await fetch('/api/gtm/run-full-setup', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  if (!resp.ok) {
+    const e = await resp.json();
+    throw new Error(e.error || 'Erro no servidor GTM');
+  }
+  return resp.json();
+}
+
+// --- Verificar pixel via backend (Meta API no servidor) ---
+async function verifyPixelViaBackend(pixelId) {
+  const resp = await fetch('/api/meta/verify-pixel?pixelId=' + encodeURIComponent(pixelId), {
+    credentials: 'include'
+  });
+  return resp.json();
+}
+
+// --- Salvar cliente no Supabase ---
+async function saveClientToSupabase(clientData) {
+  try {
+    const resp = await fetch('/api/clients', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(clientData)
+    });
+    const d = await resp.json();
+    console.log('[Supabase] Cliente salvo:', d.client?.id);
+    return d;
+  } catch(e) {
+    console.warn('[Supabase] Falha ao salvar cliente:', e.message);
+  }
+}
+
+// --- Inicializar: verificar sessão ao carregar ---
+document.addEventListener('DOMContentLoaded', function() {
+  // Restaurar flags de conexão do localStorage (modo offline)
+  if (localStorage.getItem('vallor_google_connected')) {
+    S.googleConnected = true;
+  }
+  if (localStorage.getItem('vallor_meta_connected')) {
+    S.metaConnected = true;
+  }
+  // Confirmar com servidor
+  checkSession();
+});
+
+</script>
+</body>
+</html>

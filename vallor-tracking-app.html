@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vallor Tracking Setup — Instale tudo em minutos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --azul: #0A1628;
+    --azul-mid: #0D2045;
+    --azul-light: #1A3A6B;
+    --gold: #C8960C;
+    --gold-bright: #F0B429;
+    --gold-dim: #7A5A08;
+    --white: #F5F8FF;
+    --gray: #8A9BBF;
+    --bg: #060E1E;
+    --card: #0D1A30;
+    --card2: #0F2040;
+    --border: rgba(200,150,12,0.18);
+    --green: #0FBF6A;
+    --red: #FF4B5C;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 10% 0%, rgba(10,22,40,0.95) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 90% 100%, rgba(200,150,12,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(13,32,69,0.4) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* GRID LINES */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(200,150,12,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,150,12,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header {
+    padding: 40px 0 20px;
+    text-align: center;
+    position: relative; z-index: 1;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(200,150,12,0.1);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 20px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold-bright);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .logo-badge::before { content: '◆'; font-size: 8px; }
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--white);
+    margin-bottom: 14px;
+  }
+  header h1 span { color: var(--gold-bright); }
+  header p {
+    color: var(--gray);
+    font-size: 16px;
+    max-width: 520px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  /* PROGRESS */
+  .progress-track {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-bottom: 48px;
+  }
+  .step-dot {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    position: relative;
+  }
+  .step-dot .circle {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 2px solid rgba(200,150,12,0.3);
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--gray);
+    transition: all 0.4s ease;
+    position: relative; z-index: 1;
+  }
+  .step-dot .label {
+    font-size: 11px; color: var(--gray); font-weight: 500;
+    white-space: nowrap; letter-spacing: 0.5px;
+    transition: color 0.4s;
+  }
+  .step-dot.active .circle {
+    border-color: var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    color: var(--azul);
+    box-shadow: 0 0 20px rgba(200,150,12,0.4);
+  }
+  .step-dot.active .label { color: var(--gold-bright); }
+  .step-dot.done .circle {
+    border-color: var(--green);
+    background: var(--green);
+    color: white;
+  }
+  .step-dot.done .label { color: var(--green); }
+  .step-line {
+    width: 60px; height: 2px;
+    background: rgba(200,150,12,0.15);
+    margin-bottom: 26px;
+    transition: background 0.4s;
+    flex-shrink: 0;
+  }
+  .step-line.done { background: var(--green); }
+
+  /* PANELS */
+  .panel {
+    display: none;
+    animation: fadeUp 0.5s ease;
+  }
+  .panel.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .card h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 8px; color: var(--white);
+  }
+  .card .subtitle { color: var(--gray); font-size: 14px; margin-bottom: 28px; line-height: 1.5; }
+
+  /* PLATFORM SELECTOR */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .platform-btn {
+    background: var(--card2);
+    border: 2px solid rgba(200,150,12,0.15);
+    border-radius: 10px;
+    padding: 18px 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s;
+    color: var(--gray);
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .platform-btn .icon { font-size: 26px; display: block; margin-bottom: 8px; }
+  .platform-btn:hover {
+    border-color: rgba(200,150,12,0.5);
+    color: var(--white);
+    transform: translateY(-2px);
+  }
+  .platform-btn.selected {
+    border-color: var(--gold-bright);
+    background: rgba(200,150,12,0.1);
+    color: var(--gold-bright);
+    box-shadow: 0 0 16px rgba(200,150,12,0.15);
+  }
+
+  /* INPUTS */
+  .input-group { margin-bottom: 20px; }
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold-bright);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .input-group .hint {
+    font-size: 12px; color: var(--gray);
+    margin-bottom: 8px; font-weight: 400; text-transform: none; letter-spacing: 0;
+  }
+  .input-group input, .input-group select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(200,150,12,0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--white);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.25s;
+    outline: none;
+  }
+  .input-group input::placeholder { color: rgba(138,155,191,0.5); }
+  .input-group input:focus, .input-group select:focus {
+    border-color: var(--gold-bright);
+    background: rgba(200,150,12,0.06);
+    box-shadow: 0 0 0 3px rgba(200,150,12,0.1);
+  }
+  .input-group input.valid { border-color: var(--green); }
+  .input-group input.invalid { border-color: var(--red); }
+  .input-group select option { background: var(--azul-mid); }
+
+  .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:600px) { .input-row { grid-template-columns: 1fr; } }
+
+  /* BUTTON */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold), var(--gold-bright));
+    color: var(--azul);
+    border: none;
+    border-radius: 10px;
+    padding: 16px 36px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(200,150,12,0.35);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gray);
+    padding: 14px 28px;
+    font-size: 14px;
+  }
+  .btn-outline:hover {
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+    box-shadow: none;
+  }
+  .btn-row { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; margin-top: 28px; }
+  .btn-green {
+    background: linear-gradient(135deg, #0a8a4a, var(--green));
+    color: white;
+  }
+
+  /* OUTPUT BLOCKS */
+  .output-section { margin-top: 28px; }
+  .output-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--gold-bright);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .output-section h3 .badge {
+    background: rgba(200,150,12,0.15);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .code-block {
+    background: #060d1a;
+    border: 1px solid rgba(200,150,12,0.2);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .code-block pre {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #a8d0ff;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.7;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .code-block pre .comment { color: #5a7a6a; }
+  .code-block pre .tag { color: #79c0ff; }
+  .code-block pre .str { color: #a5d6a7; }
+  .code-block pre .num { color: #f8a170; }
+
+  .copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(200,150,12,0.15);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: var(--gold-bright);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .copy-btn:hover { background: rgba(200,150,12,0.3); }
+  .copy-btn.copied { background: rgba(15,191,106,0.2); border-color: var(--green); color: var(--green); }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+    color: var(--white);
+    line-height: 1.5;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist .num-badge {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: var(--azul);
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800;
+    flex-shrink: 0;
+    font-family: 'Syne', sans-serif;
+    margin-top: 1px;
+  }
+  .checklist .platform-tag {
+    display: inline-block;
+    background: rgba(200,150,12,0.12);
+    border: 1px solid rgba(200,150,12,0.3);
+    border-radius: 5px;
+    padding: 1px 8px;
+    font-size: 10px;
+    color: var(--gold-bright);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  /* UTM BUILDER */
+  .utm-result {
+    background: #060d1a;
+    border: 1px solid rgba(15,191,106,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--green);
+    word-break: break-all;
+    line-height: 1.7;
+    position: relative;
+    margin-top: 16px;
+    min-height: 60px;
+  }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--card2);
+    border: 1px solid rgba(200,150,12,0.15);
+    border-radius: 8px;
+    padding: 8px 18px;
+    color: var(--gray);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab-btn.active {
+    background: rgba(200,150,12,0.15);
+    border-color: var(--gold-bright);
+    color: var(--gold-bright);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ALERT */
+  .alert {
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .alert-gold {
+    background: rgba(200,150,12,0.08);
+    border: 1px solid rgba(200,150,12,0.3);
+    color: #e0c060;
+  }
+  .alert-green {
+    background: rgba(15,191,106,0.08);
+    border: 1px solid rgba(15,191,106,0.3);
+    color: var(--green);
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* SUCCESS CARD */
+  .success-header {
+    text-align: center; padding: 40px 20px;
+  }
+  .success-header .trophy { font-size: 64px; margin-bottom: 16px; display: block; }
+  .success-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px; font-weight: 800;
+    color: var(--gold-bright);
+    margin-bottom: 10px;
+  }
+  .success-header p { color: var(--gray); font-size: 15px; line-height: 1.6; }
+
+  /* DOWNLOAD ROW */
+  .download-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 22px;
+    color: var(--white);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .download-btn:hover { border-color: var(--gold-bright); color: var(--gold-bright); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(200,150,12,0.3); border-radius: 3px; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 0 32px;
+    color: rgba(138,155,191,0.4);
+    font-size: 12px;
+    letter-spacing: 1px;
+    position: relative; z-index: 1;
+  }
+  footer span { color: var(--gold-dim); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="logo-badge">Vallor Growth Platform ◆ Protocolo V7</div>
+    <h1>Rastreamento Avançado<br/><span>em Minutos</span></h1>
+    <p>Cole seus IDs. O app gera tudo pronto — GTM, Pixel, CAPI, UTMs e checklist personalizado. Zero código necessário.</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PROGRESS -->
+  <div class="progress-track">
+    <div class="step-dot active" id="dot-1"><div class="circle" id="c1">1</div><div class="label">Plataforma</div></div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step-dot" id="dot-2"><div class="circle" id="c2">2</div><div class="label">Seus IDs</div></div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step-dot" id="dot-3"><div class="circle" id="c3">3</div><div class="label">UTMs</div></div>
+    <div class="step-line" id="line-3"></div>
+    <div class="step-dot" id="dot-4"><div class="circle" id="c4">4</div><div class="label">Tudo Pronto</div></div>
+  </div>
+
+  <!-- PANEL 1: PLATFORM -->
+  <div class="panel active" id="panel-1">
+    <div class="card">
+      <h2>Qual é a plataforma do site?</h2>
+      <p class="subtitle">O app vai gerar instruções e códigos específicos para a sua plataforma.</p>
+      <div class="platform-grid">
+        <div class="platform-btn" onclick="selectPlatform('wordpress')" id="plt-wordpress">
+          <span class="icon">🔷</span>WordPress
+        </div>
+        <div class="platform-btn" onclick="selectPlatform('shopify')" id="plt-shopify">
+          <span class="icon">🛍️</span>Shopify / Nuvemshop
+        </div>
+        <div class="platform-btn" onclick="selectPlatform('rd')" id="plt-rd">
+          <span class="icon">📄</span>RD Station / Klickpages
+        </div>
+        <div class="platform-btn" onclick="selectPlatform('html')" id="plt-html">
+          <span class="icon">💻</span>Site HTML / Custom
+        </div>
+        <div class="platform-btn" onclick="selectPlatform('antigravity')" id="plt-antigravity">
+          <span class="icon">🚀</span>Antigravity
+        </div>
+        <div class="platform-btn" onclick="selectPlatform('lovable')" id="plt-lovable">
+          <span class="icon">💜</span>Lovable
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="goTo(2)" id="btn-p1">Próximo →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: IDS -->
+  <div class="panel" id="panel-2">
+    <div class="card">
+      <h2>Cole seus IDs abaixo</h2>
+      <p class="subtitle">Apenas os números. O app monta tudo automaticamente. Os campos marcados com * são obrigatórios.</p>
+
+      <div class="alert alert-gold">
+        <span class="alert-icon">💡</span>
+        <span>Não sabe onde encontrar seus IDs? Veja o guia rápido: <strong>Pixel ID</strong> → Gerenciador de Eventos da Meta | <strong>GTM ID</strong> → tagmanager.google.com | <strong>CAPI Token</strong> → Gerenciador de Eventos > Configurações > API de Conversões</span>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>🎯 Pixel ID da Meta *</label>
+          <div class="hint">Ex: 1234567890123456 (15-16 dígitos)</div>
+          <input type="text" id="pixelId" placeholder="1234567890123456" oninput="validateField(this,'pixel')"/>
+        </div>
+        <div class="input-group">
+          <label>📦 GTM Container ID *</label>
+          <div class="hint">Ex: GTM-XXXXXXX (começa com GTM-)</div>
+          <input type="text" id="gtmId" placeholder="GTM-XXXXXXX" oninput="validateField(this,'gtm')"/>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>🔐 CAPI Token de Acesso</label>
+          <div class="hint">Token longo gerado no Gerenciador de Eventos</div>
+          <input type="text" id="capiToken" placeholder="EAABsbCS..." oninput="validateField(this,'capi')"/>
+        </div>
+        <div class="input-group">
+          <label>🌐 Domínio do site *</label>
+          <div class="hint">Ex: meunegocio.com.br</div>
+          <input type="text" id="domain" placeholder="meunegocio.com.br" oninput="validateField(this,'domain')"/>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>📄 URL da Página de Obrigado (para evento Lead)</label>
+        <div class="hint">Ex: /obrigado ou /thank-you — onde o usuário vai após preencher o formulário</div>
+        <input type="text" id="thankYouUrl" placeholder="/obrigado"/>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="goTo(1)">← Voltar</button>
+        <button class="btn" onclick="goTo(3)">Próximo →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: UTMs -->
+  <div class="panel" id="panel-3">
+    <div class="card">
+      <h2>Gerador de UTMs</h2>
+      <p class="subtitle">Crie links rastreáveis para cada campanha. O UTM diz exatamente de onde veio cada lead.</p>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>🌐 URL do site</label>
+          <div class="hint">URL completa da página de destino</div>
+          <input type="text" id="utmUrl" placeholder="https://meunegocio.com.br/pagina"/>
+        </div>
+        <div class="input-group">
+          <label>📢 Fonte (utm_source)</label>
+          <div class="hint">De onde vem o tráfego</div>
+          <select id="utmSource">
+            <option value="facebook">facebook</option>
+            <option value="instagram">instagram</option>
+            <option value="google">google</option>
+            <option value="whatsapp">whatsapp</option>
+            <option value="email">email</option>
+            <option value="youtube">youtube</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>⚙️ Mídia (utm_medium)</label>
+          <div class="hint">Tipo de tráfego</div>
+          <select id="utmMedium">
+            <option value="cpc">cpc (tráfego pago)</option>
+            <option value="social">social (orgânico)</option>
+            <option value="email">email</option>
+            <option value="stories">stories</option>
+            <option value="reels">reels</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>🎯 Campanha (utm_campaign)</label>
+          <div class="hint">Nome da sua campanha</div>
+          <input type="text" id="utmCampaign" placeholder="captacao_leads_dentista"/>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label>📝 Conteúdo (utm_content) — opcional</label>
+          <div class="hint">Variante do anúncio</div>
+          <input type="text" id="utmContent" placeholder="video_depoimento_v1"/>
+        </div>
+        <div class="input-group">
+          <label>🔑 Termo (utm_term) — opcional</label>
+          <div class="hint">Palavra-chave (para Google)</div>
+          <input type="text" id="utmTerm" placeholder="clinica_odontologica_sp"/>
+        </div>
+      </div>
+
+      <button class="btn" onclick="generateUtm()" style="width:100%;margin-top:8px;">⚡ Gerar Link UTM</button>
+      <div class="utm-result" id="utmResult" style="display:none"></div>
+
+      <div class="btn-row" style="margin-top:24px;">
+        <button class="btn btn-outline" onclick="goTo(2)">← Voltar</button>
+        <button class="btn btn-green" onclick="generateAll()">🚀 Gerar Tudo Agora</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 4: RESULTS -->
+  <div class="panel" id="panel-4">
+
+    <div class="success-header">
+      <span class="trophy">🏆</span>
+      <h2>Tudo Gerado e Pronto!</h2>
+      <p>Copie cada bloco abaixo e siga o checklist.<br/>Você vai instalar tudo em menos de 15 minutos.</p>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('gtm')">🏷️ GTM + Pixel</button>
+      <button class="tab-btn" onclick="switchTab('capi')">🔐 CAPI</button>
+      <button class="tab-btn" onclick="switchTab('checklist')">✅ Checklist</button>
+      <button class="tab-btn" onclick="switchTab('utms')">🔗 UTMs</button>
+    </div>
+
+    <!-- TAB: GTM -->
+    <div class="tab-content active card" id="tab-gtm">
+      <div class="alert alert-gold">
+        <span class="alert-icon">⚠️</span>
+        <span>Instale o GTM PRIMEIRO no seu site, depois configure as tags abaixo no painel do GTM.</span>
+      </div>
+
+      <div class="output-section">
+        <h3>Código GTM para instalar no site <span class="badge">COLE NO &lt;HEAD&gt;</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('gtm-head')">Copiar</button>
+          <pre id="gtm-head"></pre>
+        </div>
+
+        <h3>Código GTM — parte 2 <span class="badge">COLE APÓS &lt;BODY&gt;</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('gtm-body')">Copiar</button>
+          <pre id="gtm-body"></pre>
+        </div>
+
+        <h3>Configuração da Tag Pixel no GTM <span class="badge">NO PAINEL GTM</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('gtm-pixel-config')">Copiar</button>
+          <pre id="gtm-pixel-config"></pre>
+        </div>
+
+        <h3>Código JavaScript do Pixel (instalação direta) <span class="badge">ALTERNATIVA SEM GTM</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('pixel-direct')">Copiar</button>
+          <pre id="pixel-direct"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CAPI -->
+    <div class="tab-content card" id="tab-capi">
+      <div class="alert alert-green">
+        <span class="alert-icon">✅</span>
+        <span>A CAPI envia dados do <strong>servidor</strong> para a Meta. Escolha o método conforme sua plataforma.</span>
+      </div>
+
+      <div class="output-section">
+        <h3>Snippet CAPI — Node.js / Express <span class="badge">BACKEND</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('capi-node')">Copiar</button>
+          <pre id="capi-node"></pre>
+        </div>
+
+        <h3>Snippet CAPI — PHP (WordPress / Custom) <span class="badge">PHP</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('capi-php')">Copiar</button>
+          <pre id="capi-php"></pre>
+        </div>
+
+        <h3>Configuração Plugin WordPress (PixelYourSite) <span class="badge">SEM CÓDIGO</span></h3>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode('capi-wp')">Copiar</button>
+          <pre id="capi-wp"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CHECKLIST -->
+    <div class="tab-content card" id="tab-checklist">
+      <h2 style="margin-bottom:6px;">Seu Checklist Personalizado</h2>
+      <p class="subtitle" style="margin-bottom:20px;">Siga na ordem. Cada passo foi gerado para <strong id="platform-name-display"></strong>.</p>
+      <ul class="checklist" id="checklist-items"></ul>
+    </div>
+
+    <!-- TAB: UTMs -->
+    <div class="tab-content card" id="tab-utms">
+      <h2 style="margin-bottom:6px;">Seus Links UTM</h2>
+      <p class="subtitle" style="margin-bottom:20px;">Links prontos para usar nos seus anúncios. Use um link diferente para cada campanha.</p>
+      <div id="utms-panel-content"></div>
+    </div>
+
+    <div class="download-row">
+      <button class="download-btn" onclick="downloadAll()">⬇️ Baixar tudo como .txt</button>
+      <button class="btn btn-outline" onclick="goTo(1)" style="font-size:13px;padding:12px 22px;">🔄 Gerar para outro cliente</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div>◆ VALLOR GROWTH PLATFORM ◆ <span>Protocolo V7™</span> ◆</div>
+  <div style="margin-top:6px;">Laboratório de Neurociência Aplicada a Vendas</div>
+</footer>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+const state = {
+  platform: '',
+  pixelId: '',
+  gtmId: '',
+  capiToken: '',
+  domain: '',
+  thankYouUrl: '/obrigado',
+  utm: {}
+};
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────
+function goTo(step) {
+  if (step === 2 && !state.platform) {
+    alert('Por favor, selecione uma plataforma primeiro.');
+    return;
+  }
+  if (step === 3) {
+    const pid = document.getElementById('pixelId').value.trim();
+    const gtm = document.getElementById('gtmId').value.trim();
+    const dom = document.getElementById('domain').value.trim();
+    if (!pid || !gtm || !dom) {
+      alert('Preencha pelo menos o Pixel ID, GTM ID e Domínio.');
+      return;
+    }
+    state.pixelId = pid;
+    state.gtmId = gtm;
+    state.capiToken = document.getElementById('capiToken').value.trim();
+    state.domain = dom.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    state.thankYouUrl = document.getElementById('thankYouUrl').value.trim() || '/obrigado';
+    // pre-fill utm url
+    if (!document.getElementById('utmUrl').value)
+      document.getElementById('utmUrl').value = 'https://' + state.domain;
+  }
+
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + step).classList.add('active');
+
+  // update progress
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('dot-' + i);
+    const circle = document.getElementById('c' + i);
+    dot.classList.remove('active', 'done');
+    if (i < step) { dot.classList.add('done'); circle.textContent = '✓'; }
+    else if (i === step) { dot.classList.add('active'); circle.textContent = i; }
+    else { circle.textContent = i; }
+    if (i < 4) {
+      const line = document.getElementById('line-' + i);
+      line.classList.toggle('done', i < step);
+    }
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── PLATFORM ───────────────────────────────────────────────────────────────
+function selectPlatform(p) {
+  state.platform = p;
+  document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('plt-' + p).classList.add('selected');
+}
+
+// ── VALIDATE ───────────────────────────────────────────────────────────────
+function validateField(el, type) {
+  el.classList.remove('valid', 'invalid');
+  const v = el.value.trim();
+  if (!v) return;
+  let ok = false;
+  if (type === 'pixel') ok = /^\d{12,20}$/.test(v);
+  else if (type === 'gtm') ok = /^GTM-[A-Z0-9]{4,10}$/i.test(v);
+  else if (type === 'capi') ok = v.length > 20;
+  else if (type === 'domain') ok = /^[a-z0-9.-]+\.[a-z]{2,}(\/.*)?$/i.test(v);
+  el.classList.add(ok ? 'valid' : 'invalid');
+}
+
+// ── UTM GENERATOR ──────────────────────────────────────────────────────────
+function generateUtm() {
+  const base = document.getElementById('utmUrl').value.trim() || ('https://' + state.domain);
+  const src = document.getElementById('utmSource').value;
+  const med = document.getElementById('utmMedium').value.split(' ')[0];
+  const cam = document.getElementById('utmCampaign').value.trim().replace(/\s+/g, '_');
+  const con = document.getElementById('utmContent').value.trim().replace(/\s+/g, '_');
+  const ter = document.getElementById('utmTerm').value.trim().replace(/\s+/g, '_');
+
+  let url = base + (base.includes('?') ? '&' : '?');
+  url += `utm_source=${src}&utm_medium=${med}`;
+  if (cam) url += `&utm_campaign=${cam}`;
+  if (con) url += `&utm_content=${con}`;
+  if (ter) url += `&utm_term=${ter}`;
+
+  state.utm = { url, src, med, cam };
+  const el = document.getElementById('utmResult');
+  el.style.display = 'block';
+  el.innerHTML = url + '<button class="copy-btn" style="position:absolute;top:8px;right:8px;" onclick="navigator.clipboard.writeText(\`'+url+'\`);this.textContent=\'Copiado!\';setTimeout(()=>this.textContent=\'Copiar\',2000)">Copiar</button>';
+}
+
+// ── CODE GENERATORS ────────────────────────────────────────────────────────
+function generateAll() {
+  // finalize utm
+  generateUtm();
+  buildOutputs();
+  goTo(4);
+}
+
+function buildOutputs() {
+  const { pixelId, gtmId, capiToken, domain, thankYouUrl, platform } = state;
+  const eventId = '{{Event ID}}'; // placeholder for dedup
+
+  // GTM HEAD
+  document.getElementById('gtm-head').innerHTML = syntaxHL(
+`<!-- Google Tag Manager — Cole dentro do <head> -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${gtmId}');<\/script>
+<!-- Fim do Google Tag Manager -->`);
+
+  // GTM BODY
+  document.getElementById('gtm-body').innerHTML = syntaxHL(
+`<!-- Google Tag Manager (noscript) — Cole logo após o <body> -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- Fim do Google Tag Manager (noscript) -->`);
+
+  // GTM PIXEL CONFIG (instructions)
+  document.getElementById('gtm-pixel-config').innerHTML = syntaxHL(
+`// INSTRUÇÕES PARA CONFIGURAR NO PAINEL DO GTM (tagmanager.google.com)
+// ─────────────────────────────────────────────────────────────────────
+// PASSO 1: Crie uma nova Tag
+//   Nome: "Meta Pixel - PageView"
+//   Tipo: Template "Facebook Pixel" (instale da galeria)
+//   Pixel ID: ${pixelId}
+//   Evento: PageView
+//   Acionamento: All Pages
+//
+// PASSO 2: Crie uma nova Tag para Lead
+//   Nome: "Meta Pixel - Lead"
+//   Tipo: Template "Facebook Pixel"
+//   Pixel ID: ${pixelId}
+//   Evento: Lead
+//   Acionamento: URL contém "${thankYouUrl}"
+//
+// PASSO 3: Adicione event_id para deduplicação
+//   Em "Configurações Adicionais" de cada tag:
+//   Parâmetros adicionais > event_id > {{Random Number}}
+//
+// PASSO 4: Clique em "Enviar" > "Publicar" para ativar
+// ─────────────────────────────────────────────────────────────────────`);
+
+  // PIXEL DIRECT
+  document.getElementById('pixel-direct').innerHTML = syntaxHL(
+`<!-- Meta Pixel — Instalação direta (sem GTM) — Cole no <head> -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window,document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+
+fbq('init', '${pixelId}');
+fbq('track', 'PageView');
+
+// EVENTO LEAD — Cole apenas na página: ${thankYouUrl}
+// fbq('track', 'Lead');
+<\/script>
+<noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1"/></noscript>
+<!-- Fim Meta Pixel -->`);
+
+  // CAPI NODE
+  document.getElementById('capi-node').innerHTML = syntaxHL(
+`// CAPI — Node.js / Express
+// npm install axios crypto
+// Cole em routes/conversions.js ou similar
+// ─────────────────────────────────────────────
+const axios = require('axios');
+const crypto = require('crypto');
+
+const PIXEL_ID    = '${pixelId}';
+const CAPI_TOKEN  = '${capiToken || 'SEU_TOKEN_AQUI'}';
+const API_VERSION = 'v19.0';
+
+function hashData(value) {
+  return crypto.createHash('sha256').update(value.toLowerCase().trim()).digest('hex');
+}
+
+async function sendLeadEvent({ email, phone, firstName, lastName, ip, userAgent, eventUrl }) {
+  const eventId = 'lead_' + Date.now() + '_' + Math.random().toString(36).substr(2,9);
+
+  const payload = {
+    data: [{
+      event_name:  'Lead',
+      event_time:  Math.floor(Date.now() / 1000),
+      event_id:    eventId, // para deduplicação com o Pixel
+      event_source_url: eventUrl || 'https://${domain}${thankYouUrl}',
+      action_source: 'website',
+      user_data: {
+        em:  email     ? [hashData(email)]     : undefined,
+        ph:  phone     ? [hashData(phone)]      : undefined,
+        fn:  firstName ? [hashData(firstName)]  : undefined,
+        ln:  lastName  ? [hashData(lastName)]   : undefined,
+        client_ip_address: ip,
+        client_user_agent: userAgent,
+        fbc:  null, // pegar do cookie _fbc
+        fbp:  null  // pegar do cookie _fbp
+      }
+    }]
+  };
+
+  try {
+    const res = await axios.post(
+      \`https://graph.facebook.com/\${API_VERSION}/\${PIXEL_ID}/events?access_token=\${CAPI_TOKEN}\`,
+      payload
+    );
+    console.log('CAPI Lead enviado:', res.data);
+    return res.data;
+  } catch (err) {
+    console.error('Erro CAPI:', err.response?.data || err.message);
+  }
+}
+
+// ROTA DE EXEMPLO:
+// app.post('/api/lead', async (req, res) => {
+//   await sendLeadEvent({
+//     email: req.body.email, phone: req.body.phone,
+//     ip: req.ip, userAgent: req.headers['user-agent'],
+//     eventUrl: req.headers.referer
+//   });
+//   res.json({ ok: true });
+// });`);
+
+  // CAPI PHP
+  document.getElementById('capi-php').innerHTML = syntaxHL(
+`<?php
+// CAPI — PHP (WordPress, site custom)
+// Cole em functions.php (WordPress) ou no backend da landing page
+
+define('META_PIXEL_ID',   '${pixelId}');
+define('META_CAPI_TOKEN', '${capiToken || 'SEU_TOKEN_AQUI'}');
+
+function hashData($value) {
+    return hash('sha256', strtolower(trim($value)));
+}
+
+function sendMetaLeadEvent($email = '', $phone = '', $firstName = '', $lastName = '') {
+    $eventId = 'lead_' . time() . '_' . substr(md5(rand()), 0, 8);
+
+    $userData = [
+        'client_ip_address' => $_SERVER['REMOTE_ADDR'] ?? '',
+        'client_user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+    ];
+    if ($email)     $userData['em'] = [hashData($email)];
+    if ($phone)     $userData['ph'] = [hashData($phone)];
+    if ($firstName) $userData['fn'] = [hashData($firstName)];
+    if ($lastName)  $userData['ln'] = [hashData($lastName)];
+
+    // Pegar cookies do Facebook para melhorar a atribuição
+    if (!empty($_COOKIE['_fbc'])) $userData['fbc'] = $_COOKIE['_fbc'];
+    if (!empty($_COOKIE['_fbp'])) $userData['fbp'] = $_COOKIE['_fbp'];
+
+    $payload = json_encode([
+        'data' => [[
+            'event_name'       => 'Lead',
+            'event_time'       => time(),
+            'event_id'         => $eventId,
+            'event_source_url' => 'https://${domain}${thankYouUrl}',
+            'action_source'    => 'website',
+            'user_data'        => $userData,
+        ]]
+    ]);
+
+    $ch = curl_init("https://graph.facebook.com/v19.0/" . META_PIXEL_ID . "/events?access_token=" . META_CAPI_TOKEN);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return json_decode($result, true);
+}
+
+// CHAMAR QUANDO O FORMULÁRIO FOR ENVIADO:
+// sendMetaLeadEvent($email, $phone, $nome, $sobrenome);
+?>`);
+
+  // CAPI WORDPRESS PLUGIN
+  document.getElementById('capi-wp').innerHTML = syntaxHL(
+`// CONFIGURAÇÃO VIA PLUGIN (sem código) — PixelYourSite Pro
+// ──────────────────────────────────────────────────────────
+// 1. Instale o plugin "PixelYourSite Pro" no WordPress
+// 2. Vá em PixelYourSite > Facebook Pixel
+// 3. Cole seu Pixel ID:   ${pixelId}
+// 4. Ative "Conversions API (CAPI)"
+// 5. Cole seu Token:      ${capiToken || 'SEU_TOKEN_AQUI'}
+// 6. Ative "Deduplication" (event_id automático)
+// 7. Em "Events", ative: Lead, ViewContent, Purchase
+// 8. Configure Lead para disparar em: ${thankYouUrl}
+// 9. Salve. Pronto — Pixel + CAPI + deduplicação ativos.
+// ──────────────────────────────────────────────────────────
+// ALTERNATIVA GRATUITA: Plugin oficial "Meta for WordPress"
+// Pixel ID: ${pixelId}
+// Token:    ${capiToken || 'SEU_TOKEN_AQUI'}
+// (funcionalidades básicas de CAPI incluídas)`);
+
+  // CHECKLIST
+  buildChecklist(platform, pixelId, gtmId, capiToken, domain, thankYouUrl);
+
+  // UTMs
+  buildUtmsPanel();
+}
+
+function buildChecklist(platform, pixelId, gtmId, capiToken, domain, thankYouUrl) {
+  document.getElementById('platform-name-display').textContent = {
+    wordpress: 'WordPress',
+    shopify: 'Shopify / Nuvemshop',
+    rd: 'RD Station / Klickpages',
+    html: 'Site HTML / Custom',
+    antigravity: 'Antigravity',
+    lovable: 'Lovable'
+  }[platform] || 'seu site';
+
+  const items = [];
+
+  // UNIVERSAL
+  items.push({ tag: 'META', text: `Acesse <strong>business.facebook.com → Gerenciador de Eventos</strong>. Confirme que o Pixel <strong>${pixelId}</strong> existe e está ativo.` });
+  items.push({ tag: 'META', text: `Dentro do Pixel ${pixelId} → Configurações → ative <strong>Advanced Matching</strong> com: email, telefone, nome, sobrenome, cidade, estado.` });
+  items.push({ tag: 'GTM', text: `Acesse <strong>tagmanager.google.com</strong>. Confirme que o container <strong>${gtmId}</strong> existe.` });
+
+  // PLATFORM-SPECIFIC INSTALL
+  if (platform === 'wordpress') {
+    items.push({ tag: 'WORDPRESS', text: `Instale o plugin <strong>"Insert Headers and Footers"</strong> no WordPress.` });
+    items.push({ tag: 'WORDPRESS', text: `Cole o <strong>Código GTM Cabeçalho</strong> (da aba GTM+Pixel) na área "Header" do plugin. Cole o segundo código na área "Body".` });
+  } else if (platform === 'shopify') {
+    items.push({ tag: 'SHOPIFY', text: `Vá em <strong>Loja Online → Temas → Editar código → theme.liquid</strong>. Cole o Código GTM logo abaixo de <code>&lt;head&gt;</code> e o segundo logo após <code>&lt;body&gt;</code>.` });
+  } else if (platform === 'rd') {
+    items.push({ tag: 'RD/KLICK', text: `Na sua plataforma, acesse <strong>Configurações → Integrações → Scripts de cabeçalho</strong>. Cole o Código GTM da aba GTM+Pixel.` });
+  } else if (platform === 'html') {
+    items.push({ tag: 'HTML', text: `Abra seu arquivo HTML. Cole o <strong>Código GTM Cabeçalho</strong> antes de <code>&lt;/head&gt;</code>. Cole o segundo código logo após a abertura de <code>&lt;body&gt;</code>.` });
+  } else if (platform === 'antigravity') {
+    items.push({ tag: 'ANTIGRAVITY', text: `No painel Antigravity, acesse <strong>Configurações do Site → Scripts Globais</strong>. Cole o Código GTM no campo de Head Scripts.` });
+  } else if (platform === 'lovable') {
+    items.push({ tag: 'LOVABLE', text: `No editor Lovable, acesse as <strong>configurações do projeto → Custom Code → Head</strong>. Cole o Código GTM da aba GTM+Pixel.` });
+  }
+
+  items.push({ tag: 'GTM', text: `Instale a extensão <strong>"Tag Assistant"</strong> no Chrome. Acesse <strong>https://${domain}</strong> e confirme que o container ${gtmId} aparece como ativo.` });
+  items.push({ tag: 'GTM', text: `No painel GTM, crie a tag <strong>"Meta Pixel - PageView"</strong> seguindo as instruções da aba GTM+Pixel. Publique o container.` });
+  items.push({ tag: 'GTM', text: `Instale a extensão <strong>"Meta Pixel Helper"</strong> no Chrome. Acesse o site e confirme que o evento <strong>PageView</strong> dispara (ícone verde).` });
+  items.push({ tag: 'GTM', text: `No painel GTM, crie a tag <strong>"Meta Pixel - Lead"</strong> com acionamento apenas na URL <strong>${thankYouUrl}</strong>. Publique novamente.` });
+  items.push({ tag: 'GTM', text: `Teste o evento Lead: preencha um formulário no site, vá até a página ${thankYouUrl} e confirme o disparo do evento Lead no Meta Pixel Helper.` });
+
+  if (capiToken) {
+    if (platform === 'wordpress') {
+      items.push({ tag: 'CAPI', text: `Instale o plugin <strong>"PixelYourSite"</strong>. Configure com Pixel ID <strong>${pixelId}</strong> e Token CAPI. Ative deduplicação (event_id).` });
+    } else {
+      items.push({ tag: 'CAPI', text: `Cole o <strong>Snippet CAPI</strong> (aba CAPI) no backend do seu site ou servidor. Chame a função <code>sendLeadEvent</code> quando o formulário for enviado.` });
+    }
+    items.push({ tag: 'CAPI', text: `No Gerenciador de Eventos da Meta → aba <strong>Visão Geral</strong> → confirme que aparece sinal "Servidor" além de "Navegador" nos eventos.` });
+  } else {
+    items.push({ tag: 'CAPI', text: `<strong>Recomendado:</strong> Gere um Token de Acesso CAPI em: Gerenciador de Eventos → Configurações → API de Conversões → Gerar Token. Volte ao app e adicione o token para ativar a CAPI.` });
+  }
+
+  items.push({ tag: 'QUALIDADE', text: `No Gerenciador de Eventos → clique no evento Lead → verifique o <strong>Event Match Quality (EMQ)</strong>. Meta: pontuação acima de 6.` });
+  items.push({ tag: 'QUALIDADE', text: `Verifique a aba <strong>Diagnósticos</strong> do seu Pixel. Corrija qualquer aviso em vermelho antes de rodar campanhas.` });
+  items.push({ tag: 'UTM', text: `Use os <strong>links UTM</strong> (aba UTMs) em todos os seus anúncios. Um link diferente para cada campanha e criativo.` });
+
+  const tagColors = {
+    META: '#0057ff', GTM: '#4285f4', WORDPRESS: '#21759B', SHOPIFY: '#96bf48',
+    'RD/KLICK': '#FF5A5F', HTML: '#E34F26', CAPI: '#0FBF6A', QUALIDADE: '#C8960C',
+    UTM: '#9B59B6', ANTIGRAVITY: '#FF6B35', LOVABLE: '#7C3AED'
+  };
+
+  const ul = document.getElementById('checklist-items');
+  ul.innerHTML = items.map((item, i) => `
+    <li>
+      <div class="num-badge">${i + 1}</div>
+      <div>${item.text} <span class="platform-tag" style="background:${tagColors[item.tag]}22;border-color:${tagColors[item.tag]}44;color:${tagColors[item.tag]}">${item.tag}</span></div>
+    </li>
+  `).join('');
+}
+
+function buildUtmsPanel() {
+  const campaigns = [
+    { name: 'captacao_leads', src: 'facebook', med: 'cpc', content: 'video_v1' },
+    { name: 'captacao_leads', src: 'instagram', med: 'cpc', content: 'carrossel_v1' },
+    { name: 'remarketing', src: 'facebook', med: 'cpc', content: 'oferta_especial' },
+    { name: 'remarketing', src: 'instagram', med: 'stories', content: 'depoimento_v1' },
+  ];
+  const base = 'https://' + state.domain;
+  const html = campaigns.map(c => {
+    const url = `${base}?utm_source=${c.src}&utm_medium=${c.med}&utm_campaign=${c.name}&utm_content=${c.content}`;
+    return `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--gold-bright);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">${c.src} — ${c.name}</div>
+        <div class="utm-result" style="margin-top:0;font-size:12px;padding:12px 16px;">
+          ${url}
+          <button class="copy-btn" style="position:absolute;top:8px;right:8px;" onclick="navigator.clipboard.writeText('${url}');this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar',2000)">Copiar</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('utms-panel-content').innerHTML = html + `
+    <div class="alert alert-gold" style="margin-top:8px;">
+      <span class="alert-icon">💡</span>
+      <span>Use o Gerador de UTMs (Passo 3) para criar links personalizados para cada campanha específica.</span>
+    </div>`;
+}
+
+// ── SYNTAX HIGHLIGHT ───────────────────────────────────────────────────────
+function syntaxHL(code) {
+  return code
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/(\/\/.*)/g, '<span class="comment">$1</span>')
+    .replace(/('.*?'|".*?")/g, '<span class="str">$1</span>')
+    .replace(/\b(\d+)\b/g, '<span class="num">$1</span>')
+    .replace(/\b(function|const|let|var|if|else|return|await|async|require|define|echo|use|try|catch)\b/g, '<span class="tag">$1</span>');
+}
+
+// ── COPY ───────────────────────────────────────────────────────────────────
+function copyCode(id) {
+  const pre = document.getElementById(id);
+  const text = pre ? pre.innerText : '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = pre.parentElement.querySelector('.copy-btn');
+    if (btn) { btn.textContent = 'Copiado! ✓'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2500); }
+  });
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ── DOWNLOAD ───────────────────────────────────────────────────────────────
+function downloadAll() {
+  const sections = ['gtm-head','gtm-body','gtm-pixel-config','pixel-direct','capi-node','capi-php','capi-wp'];
+  let content = `VALLOR TRACKING SETUP — PROTOCOLO V7\nGerado em: ${new Date().toLocaleDateString('pt-BR')}\nDomínio: ${state.domain} | Pixel: ${state.pixelId} | GTM: ${state.gtmId}\n${'='.repeat(70)}\n\n`;
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      content += `\n${'─'.repeat(60)}\n${id.toUpperCase()}\n${'─'.repeat(60)}\n`;
+      content += el.innerText + '\n';
+    }
+  });
+  content += '\n\nCHECKLIST COMPLETO:\n' + [...document.querySelectorAll('#checklist-items li')].map((li, i) => `${i + 1}. ${li.innerText}`).join('\n');
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vallor_tracking_${state.domain.replace(/\./g,'_')}.txt`;
+  a.click();
+}
+</script>
+</body>
+</html>

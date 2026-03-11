@@ -1,0 +1,22 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (NUNCA comitar o .env real)
+.env
+client_secret*.json
+*.txt
+
+# Vercel
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Temporários
+*.tmp
+build_frontend.py
