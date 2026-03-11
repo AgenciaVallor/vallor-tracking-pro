@@ -17,12 +17,10 @@ module.exports = function authMeta(req, res) {
   const baseUrl = process.env.BASE_URL || `https://${req.headers.host}`;
   const redirectUri = `${baseUrl}/auth/meta/callback`;
 
-  // Scopes necessários para acessar Pixels e Business Manager
+  // Scopes básicos já aprovados pela Meta
   const scopes = [
-    'ads_management',
-    'business_management',
-    'pages_read_engagement',
-    'ads_read',
+    'public_profile',
+    'email',
   ].join(',');
 
   // Monta a URL do Facebook Login Dialog
