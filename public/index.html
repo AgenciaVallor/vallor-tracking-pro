@@ -17,8 +17,11 @@
       
       if (!session) {
         window.location.href = '/login';
+      } else {
+        window.supabaseClient = sb;
+        document.getElementById('userEmailDisplay').textContent = session.user.email;
+        document.getElementById('userAccount').style.display = 'block';
       }
-      window.supabaseClient = sb;
     } catch (e) {
       console.error('Erro no checkAuth:', e);
       window.location.href = '/login';
@@ -394,9 +397,12 @@ footer em{color:var(--gold-dim);font-style:normal;}
 <div class="wrap">
   <nav>
     <div class="logo">VALLOR <span>Tracking PRO</span></div>
-    <div style="display:flex;align-items:center;gap:15px;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div id="userAccount" style="font-size:12px;color:var(--gray2);display:none;">
+        <span style="opacity:0.6">Usuário:</span> <strong id="userEmailDisplay" style="color:var(--gold);"></strong>
+      </div>
       <div class="nav-badge">● Interno v1.0</div>
-      <a onclick="handleLogout()" style="font-size:12px;color:var(--gray);cursor:pointer;text-decoration:none;">Sair</a>
+      <a onclick="handleLogout()" style="font-size:12px;color:var(--gray);cursor:pointer;text-decoration:none;border-left:1px solid var(--border2);padding-left:15px;">Sair</a>
     </div>
   </nav>
 

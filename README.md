@@ -204,4 +204,4 @@ Após o deploy, adicione as URIs de produção no Google e Meta:
 
 ---
 
-*Vallor Growth Platform — Protocolo V7™*
+*Vallor Growth Platform — valloragencia@gmail.com · Protocolo V7™*
