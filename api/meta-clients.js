@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
+const axios = require('axios');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -32,9 +33,13 @@ module.exports = async function metaClientsHandler(req, res) {
     }
 
     if (path.startsWith('bm/accounts')) {
-      const resp = await fetch(`${META_BASE}/me/businesses?fields=id,name,ad_accounts{id,name,account_status,currency}&access_token=${metaToken}`);
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
+      const resp = await axios.get(`${META_BASE}/me/businesses`, {
+        params: {
+          fields: 'id,name,ad_accounts{id,name,account_status,currency}',
+          access_token: metaToken
+        }
+      });
+      const data = resp.data;
       
       const accounts = [];
       if (data.data) {
@@ -56,19 +61,28 @@ module.exports = async function metaClientsHandler(req, res) {
 
     if (path.startsWith('pixels/')) {
       const accountId = path.split('/')[1];
-      const resp = await fetch(`${META_BASE}/${accountId}/adspixels?fields=id,name,last_fired_time&access_token=${metaToken}`);
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      return res.json({ pixels: data.data || [] });
+      const resp = await axios.get(`${META_BASE}/${accountId}/adspixels`, {
+        params: {
+          fields: 'id,name,last_fired_time',
+          access_token: metaToken
+        }
+      });
+      return res.json({ pixels: resp.data.data || [] });
     }
 
     if (path.startsWith('insights/')) {
       const accountId = path.split('/')[1];
       const datePreset = req.query.date_preset || 'last_7d';
       const fields = 'spend,impressions,clicks,cpc,cpm,actions,action_values,reach,frequency';
-      const resp = await fetch(`${META_BASE}/${accountId}/insights?fields=${fields}&date_preset=${datePreset}&access_token=${metaToken}`);
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
+      
+      const resp = await axios.get(`${META_BASE}/${accountId}/insights`, {
+        params: {
+          fields,
+          date_preset: datePreset,
+          access_token: metaToken
+        }
+      });
+      const data = resp.data;
       
       let summary = {
         spend: 0, impressions: 0, clicks: 0, 
@@ -101,15 +115,17 @@ module.exports = async function metaClientsHandler(req, res) {
 
     if (path.startsWith('pixel-quality/')) {
       const pixelId = path.split('/')[1];
-      const resp = await fetch(`${META_BASE}/${pixelId}/stats?access_token=${metaToken}`);
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      // EMQ score and matching stats
-      return res.json({ emq_score: data.data || {} });
+      const resp = await axios.get(`${META_BASE}/${pixelId}/stats`, {
+        params: { access_token: metaToken }
+      });
+      return res.json({ emq_score: resp.data.data || {} });
     }
 
     return res.status(404).json({ error: 'Endpoint não encontrado em meta-clients.' });
   } catch (err) {
-    return res.status(err.message === 'Unauthorized' ? 401 : 500).json({ error: err.message });
+    const status = err.message === 'Unauthorized' ? 401 : 500;
+    const errorMsg = err.response?.data?.error?.message || err.message;
+    return res.status(status).json({ error: errorMsg });
   }
 };
+
