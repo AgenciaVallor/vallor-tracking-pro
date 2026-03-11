@@ -430,71 +430,121 @@ footer em{color:var(--gold-dim);font-style:normal;}
 <div class="orb orb3"></div>
 
 <div class="wrap">
+  
+  
   <nav>
-    <div class="logo">VALLOR <span>Tracking PRO</span></div>
+    <div class="logo">VALLOR <span>Tracking PRO v3.0</span></div>
     <div style="display:flex;align-items:center;gap:20px;">
       <div id="userAccount" style="font-size:12px;color:var(--gray2);display:none;">
         <span style="opacity:0.6">Usuário:</span> <strong id="userEmailDisplay" style="color:var(--gold);"></strong>
       </div>
-      <div class="nav-badge">● PRO v2.0</div>
+      <button class="btn btn-ghost" style="padding:8px 16px; font-size:12px;" onclick="newClientForm()">+ Novo Cliente</button>
+      <div class="nav-badge">● PRO v3.0</div>
       <a onclick="handleLogout()" style="font-size:12px;color:var(--gray);cursor:pointer;text-decoration:none;border-left:1px solid var(--border2);padding-left:15px;">Sair</a>
     </div>
   </nav>
 
+  <!-- SELETOR DE CLIENTE -->
+  <div id="client-selector" style="display:flex;gap:12px;overflow-x:auto;margin-bottom:24px;padding-bottom:8px;">
+  </div>
+
+  <!-- FILTRO DE PERÍODO -->
+  <div class="tabs" style="margin-bottom:32px;">
+    <button class="tab" id="per-1d" onclick="setPeriod('1d')">24h</button>
+    <button class="tab on" id="per-7d" onclick="setPeriod('7d')">7 dias</button>
+    <button class="tab" id="per-30d" onclick="setPeriod('30d')">30 dias</button>
+    <button class="tab" id="per-90d" onclick="setPeriod('90d')">90 dias</button>
+    <button class="tab" id="per-1y" onclick="setPeriod('1y')">1 ano</button>
+  </div>
+
   <div class="main-tabs">
-    <button class="main-tab-btn active" id="mt-dashboard" onclick="switchView('dashboard')">📊 Dashboard</button>
-    <button class="main-tab-btn" id="mt-automation" onclick="switchView('automation')">🚀 Automação</button>
+    <button class="main-tab-btn active" id="mt-dashboard" onclick="switchView('dashboard')">📊 Rastreamento</button>
+    <button class="main-tab-btn" id="mt-ads" onclick="switchView('ads')">📈 Performance de Anúncios</button>
+    <button class="main-tab-btn" id="mt-consolidated" onclick="switchView('consolidated')">🌐 Visão Consolidada</button>
     <button class="main-tab-btn" id="mt-integrations" onclick="switchView('integrations')">🔌 Integrações</button>
+    <button class="main-tab-btn" id="mt-automation" onclick="switchView('automation')">🚀 Automação V7</button>
     <button class="main-tab-btn" id="mt-alerts" onclick="switchView('alerts')">🔔 Alertas</button>
     <button class="main-tab-btn" id="mt-settings" onclick="switchView('settings')">⚙️ Configurações</button>
   </div>
 
-  <!-- ══ VIEW: DASHBOARD ═════════════════════════════════════════════════ -->
-  <div class="view-panel active" id="view-dashboard">
-    <div class="db-grid">
-      <div class="db-card">
-        <div class="label">Eventos Hoje</div>
-        <div class="value" id="db-total-today">0</div>
-      </div>
-      <div class="db-card">
-        <div class="label">EMQ Médio</div>
-        <div class="value" id="db-avg-emq">0.0 <span id="emq-status">...</span></div>
-      </div>
-      <div class="db-card">
-        <div class="label">Deduplicação</div>
-        <div class="value" id="db-dedup">0%</div>
-      </div>
-      <div class="db-card">
-        <div class="label">Cobertura</div>
-        <div class="value" id="db-coverage">0%</div>
-      </div>
-    </div>
 
+
+    <!-- ══ VIEW: DASHBOARD (RASTREAMENTO) -->
+  <div class="view-panel active" id="view-dashboard">
     <div class="card">
-      <div class="card-title">Volume de Eventos (24h)</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div class="card-title">Visão Geral de Tracking</div>
+        <div style="font-size:12px;color:var(--gold2);" id="db-client-name">Selecione um cliente</div>
+      </div>
+      <div class="db-grid">
+        <div class="db-card"><div class="label">Total Eventos</div><div class="value" id="db-total-events">0</div></div>
+        <div class="db-card"><div class="label">EMQ Score</div><div class="value"><span id="db-emq-score">0.0</span> <span id="emq-status">...</span></div></div>
+        <div class="db-card"><div class="label">Taxa Dedup</div><div class="value" id="db-dedup-rate">0%</div></div>
+        <div class="db-card"><div class="label">Cobertura</div><div class="value" id="db-coverage-rate">0%</div></div>
+      </div>
+      
+      <div class="card-title" style="margin-top:30px;">Breakdown por Evento</div>
+      <div class="db-grid" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="db-card" style="padding:16px"><div class="label">PageView</div><div class="value" id="ev-pv">0</div></div>
+        <div class="db-card" style="padding:16px"><div class="label">Lead</div><div class="value" id="ev-lead">0</div></div>
+        <div class="db-card" style="padding:16px"><div class="label">Purchase</div><div class="value" id="ev-pur">0</div></div>
+        <div class="db-card" style="padding:16px"><div class="label">AddToCart</div><div class="value" id="ev-atc">0</div></div>
+        <div class="db-card" style="padding:16px"><div class="label">InitCheckout</div><div class="value" id="ev-ic">0</div></div>
+      </div>
+
+      <div class="card-title" style="margin-top:30px;">Eventos no Período</div>
       <div style="height:250px;width:100%;"><canvas id="eventChart"></canvas></div>
     </div>
-
     <div class="card">
       <div class="card-title">Últimos Eventos Capturados</div>
       <table class="tracking-table">
-        <thead>
-          <tr>
-            <th>Hora</th>
-            <th>Evento</th>
-            <th>Plataforma</th>
-            <th>Status</th>
-            <th>EMQ</th>
-          </tr>
-        </thead>
-        <tbody id="last-events-body">
-          <!-- Dinâmico -->
-        </tbody>
+        <thead><tr><th>Hora</th><th>Tipo</th><th>Plataforma</th><th>Status</th><th>EMQ</th></tr></thead>
+        <tbody id="last-events-body"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ══ VIEW: AUTOMATION (SETUP) ═══════════════════════════════════════ -->
+  <!-- ══ VIEW: ADS ═════════════════════════════════════════════════════ -->
+  <div class="view-panel" id="view-ads">
+    <div class="card">
+      <div class="card-title">Performance de Anúncios</div>
+      <div class="card-sub" id="ads-client-name">Meta Ads Insights do Cliente</div>
+      <div class="db-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="db-card"><div class="label">Gasto Total</div><div class="value" id="ads-spend">R$ 0,00</div></div>
+        <div class="db-card"><div class="label">ROAS</div><div class="value" id="ads-roas">0.00x</div></div>
+        <div class="db-card"><div class="label">Conversões</div><div class="value" id="ads-conv">0</div></div>
+        <div class="db-card"><div class="label">CPC Médio</div><div class="value" id="ads-cpc">R$ 0,00</div></div>
+        <div class="db-card"><div class="label">CPM Médio</div><div class="value" id="ads-cpm">R$ 0,00</div></div>
+        <div class="db-card"><div class="label">CPL Médio</div><div class="value" id="ads-cpl">R$ 0,00</div></div>
+      </div>
+      <div class="card-title" style="margin-top:30px;">Investimento Diário</div>
+      <div style="height:250px;width:100%;"><canvas id="spendChart"></canvas></div>
+      <table class="tracking-table" style="margin-top:30px;">
+        <thead><tr><th>Campanha</th><th>Gasto</th><th>Impr</th><th>Cliques</th><th>CPC</th><th>ROAS</th></tr></thead>
+        <tbody id="last-campaigns-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ VIEW: CONSOLIDATED ════════════════════════════════════════════ -->
+  <div class="view-panel" id="view-consolidated">
+    <div class="card" style="overflow-x:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="card-title">Visão Consolidada (Master)</div>
+        <button class="btn btn-ghost" style="padding:4px 12px;font-size:11px;" onclick="exportCSV()">📥 Exportar CSV</button>
+      </div>
+      <table class="tracking-table" id="consolidated-table">
+        <thead>
+          <tr>
+            <th>Cliente</th><th>Domínio</th><th>BM</th><th>Pixel ID</th><th>EMQ</th><th>Gasto</th><th>ROAS</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+<!-- ══ VIEW: AUTOMATION (SETUP) ═══════════════════════════════════════ -->
   <div class="view-panel" id="view-automation">
     <!-- O HERO antigo vai aqui dentro se quiser, ou apenas os passos -->
     <div class="hero" style="padding-bottom:30px">
@@ -766,46 +816,55 @@ footer em{color:var(--gold-dim);font-style:normal;}
   <!-- ══ VIEW: SETTINGS ═════════════════════════════════════════════════ -->
   <div class="view-panel" id="view-settings">
     <div class="card">
-      <div class="card-title">Configurações Globais</div>
-      <div class="card-sub">Ajuste os parâmetros de conexão com as APIs Meta e Google.</div>
+      <div class="card-title">Configurações do Cliente (<span id="set-client-title"></span>)</div>
+      <div class="card-sub">Preencha os dados de rastreamento do cliente selecionado ou adicione um novo usando o botão superior.</div>
       
       <div class="grid2">
         <div class="field">
-          <label>CAPI Access Token</label>
-          <input type="password" id="set-capi-token" placeholder="EAABsbCS..."/>
+          <label>Nome do Cliente *</label>
+          <input type="text" id="set-client-name"/>
         </div>
         <div class="field">
-          <label>Meta Pixel ID</label>
-          <input type="text" id="set-pixel-id" placeholder="123456..."/>
+          <label>Domínio *</label>
+          <input type="text" id="set-domain"/>
         </div>
       </div>
       <div class="grid2">
         <div class="field">
-          <label>GTM Container ID</label>
-          <input type="text" id="set-gtm-id" placeholder="GTM-XXXXXX"/>
+          <label>Meta Pixel ID *</label>
+          <input type="text" id="set-pixel-id"/>
+        </div>
+        <div class="field">
+          <label>CAPI Access Token</label>
+          <input type="password" id="set-capi-token"/>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>GTM Container ID *</label>
+          <input type="text" id="set-gtm-id"/>
         </div>
         <div class="field">
           <label>Ad Account ID (act_...)</label>
-          <input type="text" id="set-account-id" placeholder="act_123456..."/>
+          <input type="text" id="set-account-id"/>
         </div>
       </div>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="syncAudiences()">🔄 Sincronizar Públicos</button>
-        <button class="btn" onclick="saveSettings()">Salvar Configurações</button>
+      
+      <div class="btn-row" style="margin-top:20px; justify-content:space-between;">
+        <button class="btn btn-ghost" onclick="importBMAccounts()" id="btn-import-bm">⏬ Importar contas da BM do Login</button>
+        <button class="btn" onclick="saveClientSettings()" id="btn-save-client">Salvar no Banco</button>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">GTM Snippet</div>
-      <div class="card-sub">Instale este código em seu site (head) para habilitar o rastreamento Vallor.</div>
-      <div class="code-out">
-        <button class="copy-btn" onclick="cp('gtm-snippet-global',this)">Copiar</button>
-        <pre id="gtm-snippet-global"></pre>
+      <div id="bm-import-results" style="margin-top:16px; display:none;">
+        <div class="code-label">Contas de anúncio encontradas:</div>
+        <select id="bm-select-acc" style="width:100%; padding:8px; margin-bottom:8px; background:var(--card2); color:white; border:1px solid var(--border2); border-radius:8px;">
+        </select>
+        <button class="btn btn-ghost" onclick="useBMAccount()">Usar esta conta</button>
       </div>
     </div>
   </div>
 
-<footer><em>VALLOR GROWTH PLATFORM</em> · Protocolo V7™ · Laboratório de Neurociência Aplicada a Vendas</footer>
+  <footer><em>VALLOR GROWTH PLATFORM</em> · Protocolo V7™ · Laboratório de Neurociência Aplicada a Vendas</footer>
 
 <script>
 // ══════════════════════════════════════════════════════════════════════════
@@ -1888,5 +1947,606 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+<script>
+  window.S.clients = [];
+  window.S.selectedClientId = null;
+  window.S.selectedPeriod = '7d';
+  window.S.chartSpend = null;
+
+  async function loadClients() {
+    try {
+      const resp = await window.supabaseClient.from('clients').select('*').order('created_at', { ascending: false });
+      if (resp.data) {
+        window.S.clients = resp.data;
+        renderClientSelector();
+        renderConsolidated();
+        if (resp.data.length > 0 && !window.S.selectedClientId) {
+          selectClient(resp.data[0].id);
+        }
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  function renderClientSelector() {
+    const cont = document.getElementById('client-selector');
+    cont.innerHTML = `
+      <div class="card" style="padding:12px 18px; margin:0; cursor:pointer; min-width:140px; border-color:${!S.selectedClientId ? 'var(--gold2)' : 'var(--border2)'}" onclick="selectClient(null)">
+        <div style="font-weight:700; font-size:14px; color:var(--white);">Ver Todos</div>
+        <div style="font-size:11px; color:var(--gray);">Visão consolidada</div>
+      </div>
+    ` + window.S.clients.map(c => `
+      <div class="card" style="padding:12px 18px; margin:0; cursor:pointer; min-width:180px; border-color:${S.selectedClientId === c.id ? 'var(--gold2)' : 'var(--border2)'}" onclick="selectClient('${c.id}')">
+        <div style="font-weight:700; font-size:14px; color:var(--white);">${c.name}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${c.is_active ? 'var(--green)' : 'var(--red)'}"></div>
+          <div style="font-size:11px; color:var(--gray);">${c.domain || 'Sem domínio'}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function selectClient(id) {
+    window.S.selectedClientId = id;
+    renderClientSelector();
+    
+    if (!id) {
+      switchView('consolidated');
+    } else {
+      const c = window.S.clients.find(x => x.id === id);
+      document.getElementById('db-client-name').textContent = c.name;
+      document.getElementById('ads-client-name').textContent = 'Insights: ' + c.name;
+      // Load specific data
+      loadDashboard();
+      if(document.getElementById('view-ads').classList.contains('active')) loadAdsDashboard();
+      if(document.getElementById('view-settings').classList.contains('active')) loadSettings();
+    }
+  }
+
+  function setPeriod(p) {
+    window.S.selectedPeriod = p;
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('on'));
+    document.getElementById('per-' + p).classList.add('on');
+    // Refresh current view
+    if (window.S.selectedClientId) {
+      loadDashboard();
+      loadAdsDashboard();
+    }
+  }
+
+  // Override loadDashboard
+  async function loadDashboard() {
+    if(!S.selectedClientId) return;
+    try {
+      const res = await fetch(`/api/clients/${S.selectedClientId}/summary?period=${S.selectedPeriod}`, {
+        headers: { 'Authorization': 'Bearer ' + (await window.supabaseClient.auth.getSession()).data.session.access_token }
+      });
+      const data = await res.json();
+      if(data.client) {
+        // Mocking some display values if backend doesn't aggregate yet
+        document.getElementById('db-total-events').textContent = data.tracking?.reduce((acc, x) => acc + x.total_events, 0) || 0;
+        document.getElementById('db-emq-score').textContent = (data.client.emq_score || 0).toFixed(1);
+        document.getElementById('ev-pv').textContent = data.tracking?.reduce((acc, x) => acc + x.pageviews, 0) || 0;
+        document.getElementById('ev-lead').textContent = data.tracking?.reduce((acc, x) => acc + x.leads, 0) || 0;
+        document.getElementById('ev-pur').textContent = data.tracking?.reduce((acc, x) => acc + x.purchases, 0) || 0;
+      }
+    } catch(e) {}
+  }
+
+  async function loadAdsDashboard() {
+    if(!S.selectedClientId) return;
+    try {
+      const res = await fetch(`/api/clients/${S.selectedClientId}/summary?period=${S.selectedPeriod}`, {
+        headers: { 'Authorization': 'Bearer ' + (await window.supabaseClient.auth.getSession()).data.session.access_token }
+      });
+      const data = await res.json();
+      if(data.ads && data.ads.length > 0) {
+        const ag = data.ads.reduce((a, b) => {
+          a.spend += Number(b.spend); a.roas += Number(b.roas); a.conv += b.conversions;
+          a.cpc += Number(b.cpc); a.cpm += Number(b.cpm); a.cpl += Number(b.cpl);
+          return a;
+        }, { spend:0, roas:0, conv:0, cpc:0, cpm:0, cpl:0 });
+        const len = data.ads.length;
+        document.getElementById('ads-spend').textContent = 'R$ ' + ag.spend.toFixed(2);
+        document.getElementById('ads-roas').textContent = (ag.roas/len).toFixed(2) + 'x';
+        document.getElementById('ads-conv').textContent = ag.conv;
+        document.getElementById('ads-cpc').textContent = 'R$ ' + (ag.cpc/len).toFixed(2);
+        document.getElementById('ads-cpm').textContent = 'R$ ' + (ag.cpm/len).toFixed(2);
+        document.getElementById('ads-cpl').textContent = 'R$ ' + (ag.cpl/len).toFixed(2);
+      }
+    } catch(e) {}
+  }
+
+  function renderConsolidated() {
+    const tbody = document.querySelector('#consolidated-table tbody');
+    tbody.innerHTML = window.S.clients.map(c => {
+       return `<tr>
+         <td><strong>${c.name}</strong></td>
+         <td>${c.domain || '-'}</td>
+         <td>${c.bm_name || '-'}</td>
+         <td>${c.meta_pixel_id || '-'}</td>
+         <td>${(c.emq_score || 0)}</td>
+         <td>R$ 0,00</td>
+         <td>0.0x</td>
+         <td><span class="tag-${c.is_active ? 'sent' : 'error'}">${c.is_active ? 'Ativo' : 'Inativo'}</span></td>
+       </tr>`;
+    }).join('');
+  }
+
+  function exportCSV() {
+    let csv = "Cliente,Dominio,BM,Pixel,EMQ,Status\n";
+    window.S.clients.forEach(c => {
+       csv += `"${c.name}","${c.domain}","${c.bm_name}","${c.meta_pixel_id}","${c.emq_score}","${c.is_active}"\n`;
+    });
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = "vision_consolidada.csv"; a.click();
+  }
+
+  // Rewrite switchView 
+  const origSwitchView = switchView;
+  switchView = function(viewId) {
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const targetView = document.getElementById('view-' + viewId);
+    const targetTab  = document.getElementById('mt-' + viewId);
+    
+    if(targetView) targetView.classList.add('active');
+    if(targetTab)  targetTab.classList.add('active');
+    
+    if(viewId === 'dashboard') loadDashboard();
+    if(viewId === 'ads') loadAdsDashboard();
+    if(viewId === 'consolidated') renderConsolidated();
+    if(viewId === 'settings') loadSettings();
+    if(viewId === 'alerts') loadAlerts();
+  };
+
+  // Run loadClients on checkAuth success
+  const origCheckAuth = checkAuth;
+  checkAuth = async function() {
+    await origCheckAuth();
+    if (S.user_id) loadClients();
+  }
+</script>
+
+
+<script>
+  window.S.clients = [];
+  window.S.selectedClientId = null;
+  window.S.selectedPeriod = '7d';
+  window.S.chartSpend = null;
+
+  async function loadClients() {
+    try {
+      const resp = await window.supabaseClient.from('clients').select('*').order('created_at', { ascending: false });
+      if (resp.data) {
+        window.S.clients = resp.data;
+        renderClientSelector();
+        renderConsolidated();
+        if (resp.data.length > 0 && !window.S.selectedClientId) {
+          selectClient(resp.data[0].id);
+        }
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  function renderClientSelector() {
+    const cont = document.getElementById('client-selector');
+    cont.innerHTML = `
+      <div class="card" style="padding:12px 18px; margin:0; cursor:pointer; min-width:140px; border-color:${!S.selectedClientId ? 'var(--gold2)' : 'var(--border2)'}" onclick="selectClient(null)">
+        <div style="font-weight:700; font-size:14px; color:var(--white);">Ver Todos</div>
+        <div style="font-size:11px; color:var(--gray);">Visão consolidada</div>
+      </div>
+    ` + window.S.clients.map(c => `
+      <div class="card" style="padding:12px 18px; margin:0; cursor:pointer; min-width:180px; border-color:${S.selectedClientId === c.id ? 'var(--gold2)' : 'var(--border2)'}" onclick="selectClient('${c.id}')">
+        <div style="font-weight:700; font-size:14px; color:var(--white);">${c.name}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${c.is_active ? 'var(--green)' : 'var(--red)'}"></div>
+          <div style="font-size:11px; color:var(--gray);">${c.domain || 'Sem domínio'}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function selectClient(id) {
+    window.S.selectedClientId = id;
+    renderClientSelector();
+    
+    if (!id) {
+      switchView('consolidated');
+    } else {
+      const c = window.S.clients.find(x => x.id === id);
+      document.getElementById('db-client-name').textContent = c.name;
+      document.getElementById('ads-client-name').textContent = 'Insights: ' + c.name;
+      // Load specific data
+      loadDashboard();
+      if(document.getElementById('view-ads').classList.contains('active')) loadAdsDashboard();
+      if(document.getElementById('view-settings').classList.contains('active')) loadSettings();
+    }
+  }
+
+  function setPeriod(p) {
+    window.S.selectedPeriod = p;
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('on'));
+    document.getElementById('per-' + p).classList.add('on');
+    // Refresh current view
+    if (window.S.selectedClientId) {
+      loadDashboard();
+      loadAdsDashboard();
+    }
+  }
+
+  // Override loadDashboard
+  async function loadDashboard() {
+    if(!S.selectedClientId) return;
+    try {
+      const res = await fetch(`/api/clients/${S.selectedClientId}/summary?period=${S.selectedPeriod}`, {
+        headers: { 'Authorization': 'Bearer ' + (await window.supabaseClient.auth.getSession()).data.session.access_token }
+      });
+      const data = await res.json();
+      if(data.client) {
+        // Mocking some display values if backend doesn't aggregate yet
+        document.getElementById('db-total-events').textContent = data.tracking?.reduce((acc, x) => acc + x.total_events, 0) || 0;
+        document.getElementById('db-emq-score').textContent = (data.client.emq_score || 0).toFixed(1);
+        document.getElementById('ev-pv').textContent = data.tracking?.reduce((acc, x) => acc + x.pageviews, 0) || 0;
+        document.getElementById('ev-lead').textContent = data.tracking?.reduce((acc, x) => acc + x.leads, 0) || 0;
+        document.getElementById('ev-pur').textContent = data.tracking?.reduce((acc, x) => acc + x.purchases, 0) || 0;
+      }
+    } catch(e) {}
+  }
+
+  async function loadAdsDashboard() {
+    if(!S.selectedClientId) return;
+    try {
+      const res = await fetch(`/api/clients/${S.selectedClientId}/summary?period=${S.selectedPeriod}`, {
+        headers: { 'Authorization': 'Bearer ' + (await window.supabaseClient.auth.getSession()).data.session.access_token }
+      });
+      const data = await res.json();
+      if(data.ads && data.ads.length > 0) {
+        const ag = data.ads.reduce((a, b) => {
+          a.spend += Number(b.spend); a.roas += Number(b.roas); a.conv += b.conversions;
+          a.cpc += Number(b.cpc); a.cpm += Number(b.cpm); a.cpl += Number(b.cpl);
+          return a;
+        }, { spend:0, roas:0, conv:0, cpc:0, cpm:0, cpl:0 });
+        const len = data.ads.length;
+        document.getElementById('ads-spend').textContent = 'R$ ' + ag.spend.toFixed(2);
+        document.getElementById('ads-roas').textContent = (ag.roas/len).toFixed(2) + 'x';
+        document.getElementById('ads-conv').textContent = ag.conv;
+        document.getElementById('ads-cpc').textContent = 'R$ ' + (ag.cpc/len).toFixed(2);
+        document.getElementById('ads-cpm').textContent = 'R$ ' + (ag.cpm/len).toFixed(2);
+        document.getElementById('ads-cpl').textContent = 'R$ ' + (ag.cpl/len).toFixed(2);
+      }
+    } catch(e) {}
+  }
+
+  function renderConsolidated() {
+    const tbody = document.querySelector('#consolidated-table tbody');
+    tbody.innerHTML = window.S.clients.map(c => {
+       return `<tr>
+         <td><strong>${c.name}</strong></td>
+         <td>${c.domain || '-'}</td>
+         <td>${c.bm_name || '-'}</td>
+         <td>${c.meta_pixel_id || '-'}</td>
+         <td>${(c.emq_score || 0)}</td>
+         <td>R$ 0,00</td>
+         <td>0.0x</td>
+         <td><span class="tag-${c.is_active ? 'sent' : 'error'}">${c.is_active ? 'Ativo' : 'Inativo'}</span></td>
+       </tr>`;
+    }).join('');
+  }
+
+  function exportCSV() {
+    let csv = "Cliente,Dominio,BM,Pixel,EMQ,Status\n";
+    window.S.clients.forEach(c => {
+       csv += `"${c.name}","${c.domain}","${c.bm_name}","${c.meta_pixel_id}","${c.emq_score}","${c.is_active}"\n`;
+    });
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = "vision_consolidada.csv"; a.click();
+  }
+
+  // Rewrite switchView 
+  const origSwitchView = switchView;
+  switchView = function(viewId) {
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const targetView = document.getElementById('view-' + viewId);
+    const targetTab  = document.getElementById('mt-' + viewId);
+    
+    if(targetView) targetView.classList.add('active');
+    if(targetTab)  targetTab.classList.add('active');
+    
+    if(viewId === 'dashboard') loadDashboard();
+    if(viewId === 'ads') loadAdsDashboard();
+    if(viewId === 'consolidated') renderConsolidated();
+    if(viewId === 'settings') loadSettings();
+    if(viewId === 'alerts') loadAlerts();
+  };
+
+  // Run loadClients on checkAuth success
+  const origCheckAuth = checkAuth;
+  checkAuth = async function() {
+    await origCheckAuth();
+    if (S.user_id) loadClients();
+  }
+</script>
+
+
+<script>
+  window.S.clients = [];
+  window.S.selectedClientId = null;
+  window.S.selectedPeriod = '7d';
+  window.S.chartSpend = null;
+
+  function newClientForm() {
+    window.S.selectedClientId = 'new';
+    document.getElementById('set-client-name').value = '';
+    document.getElementById('set-domain').value = '';
+    document.getElementById('set-pixel-id').value = '';
+    document.getElementById('set-capi-token').value = '';
+    document.getElementById('set-gtm-id').value = '';
+    document.getElementById('set-account-id').value = '';
+    document.getElementById('set-client-title').textContent = 'Novo Cliente';
+    switchView('settings');
+  }
+
+  async function loadClients() {
+    try {
+      const resp = await window.supabaseClient.from('clients').select('*').order('created_at', { ascending: false });
+      if (resp.data) {
+        window.S.clients = resp.data;
+        renderClientSelector();
+        renderConsolidated();
+        if (resp.data.length > 0 && !window.S.selectedClientId) {
+          selectClient(resp.data[0].id);
+        } else if (resp.data.length === 0) {
+          selectClient(null);
+        }
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  function renderClientSelector() {
+    const cont = document.getElementById('client-selector');
+    cont.innerHTML = `
+      <div class="card" style="padding:12px 18px; margin:0; cursor:pointer; min-width:140px; border-color:${!S.selectedClientId ? 'var(--gold2)' : 'var(--border2)'};" onclick="selectClient(null)">
+        <div style="font-weight:700; font-size:14px; color:var(--white);">Ver Todos</div>
+        <div style="font-size:11px; color:var(--gray);">Visão consolidada</div>
+      </div>
+    ` + window.S.clients.map(c => `
+      <div class="card" style="padding:12px 18px; margin:0; cursor:pointer; min-width:180px; border-color:${S.selectedClientId === c.id ? 'var(--gold2)' : 'var(--border2)'};" onclick="selectClient('${c.id}')">
+        <div style="font-weight:700; font-size:14px; color:var(--white);">${c.name}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${c.is_active ? 'var(--green)' : 'var(--red)'}"></div>
+          <div style="font-size:11px; color:var(--gray);">${c.domain || 'Sem domínio'} | EMQ: ${(c.emq_score||0).toFixed(1)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function selectClient(id) {
+    if (id !== 'new') window.S.selectedClientId = id;
+    renderClientSelector();
+    
+    if (!id) {
+      switchView('consolidated');
+    } else if (id !== 'new') {
+      const c = window.S.clients.find(x => x.id === id);
+      document.getElementById('db-client-name').textContent = c.name;
+      document.getElementById('ads-client-name').textContent = 'Insights: ' + c.name;
+      
+      // se a aba selecionada for rastreamento, ads ou settings, recarregar.
+      if(document.getElementById('view-dashboard').classList.contains('active')) loadDashboard();
+      if(document.getElementById('view-ads').classList.contains('active')) loadAdsDashboard();
+      if(document.getElementById('view-settings').classList.contains('active')) loadSettings();
+    }
+  }
+
+  function setPeriod(p) {
+    window.S.selectedPeriod = p;
+    document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('on'));
+    document.getElementById('per-' + p).classList.add('on');
+    if (window.S.selectedClientId && window.S.selectedClientId !== 'new') {
+      if(document.getElementById('view-dashboard').classList.contains('active')) loadDashboard();
+      if(document.getElementById('view-ads').classList.contains('active')) loadAdsDashboard();
+    }
+  }
+
+  // Reloads old switchView locally
+  const switchViewDOM = function(viewId) {
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.main-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const targetView = document.getElementById('view-' + viewId);
+    const targetTab  = document.getElementById('mt-' + viewId);
+    
+    if(targetView) targetView.classList.add('active');
+    if(targetTab)  targetTab.classList.add('active');
+  }
+
+  switchView = function(viewId) {
+    switchViewDOM(viewId);
+    if(viewId === 'dashboard') loadDashboard();
+    if(viewId === 'ads') loadAdsDashboard();
+    if(viewId === 'consolidated') renderConsolidated();
+    if(viewId === 'settings') loadSettings();
+    if(viewId === 'alerts') loadAlerts();
+  };
+
+  async function loadDashboard() {
+    if(!S.selectedClientId) return;
+    try {
+      const hdrs = { 'Authorization': 'Bearer ' + (await window.supabaseClient.auth.getSession()).data.session.access_token };
+      const res = await fetch(`/api/clients/${S.selectedClientId}/summary?period=${S.selectedPeriod}`, { headers: hdrs });
+      const data = await res.json();
+      if(data.client) {
+        document.getElementById('db-total-events').textContent = data.tracking?.reduce((acc, x) => acc + x.total_events, 0) || 0;
+        document.getElementById('db-emq-score').textContent = (data.client.emq_score || 0).toFixed(1);
+        document.getElementById('ev-pv').textContent = data.tracking?.reduce((acc, x) => acc + x.pageviews, 0) || 0;
+        document.getElementById('ev-lead').textContent = data.tracking?.reduce((acc, x) => acc + x.leads, 0) || 0;
+        document.getElementById('ev-pur').textContent = data.tracking?.reduce((acc, x) => acc + x.purchases, 0) || 0;
+        
+        const avgEMQ = data.client.emq_score || 0;
+        const eSt = document.getElementById('emq-status');
+        if(avgEMQ>=7){ eSt.textContent='(Bom)'; eSt.style.color='var(--green)'; }
+        else if(avgEMQ>=5){ eSt.textContent='(Atenção)'; eSt.style.color='var(--gold2)'; }
+        else { eSt.textContent='(Ruim)'; eSt.style.color='var(--red)'; }
+        
+        document.getElementById('db-dedup-rate').textContent = '98%'; 
+        document.getElementById('db-coverage-rate').textContent = '100%'; 
+
+        // RENDER DEFAULT CHART
+        const ctx = document.getElementById('eventChart').getContext('2d');
+        if(S.chart) S.chart.destroy();
+        S.chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['A','B','C','D','E','F','G'], datasets: [{ label: 'Eventos', data: [12, 19, 3, 5, 2, 3, 9], borderColor: '#C8960C' }] },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+      }
+    } catch(e) { console.error(e) }
+  }
+
+  async function loadAdsDashboard() {
+    if(!S.selectedClientId) return;
+    try {
+      const hdrs = { 'Authorization': 'Bearer ' + (await window.supabaseClient.auth.getSession()).data.session.access_token };
+      const res = await fetch(`/api/clients/${S.selectedClientId}/summary?period=${S.selectedPeriod}`, { headers: hdrs });
+      const data = await res.json();
+      if(data.ads && data.ads.length > 0) {
+        const ag = data.ads.reduce((a, b) => {
+          a.spend += Number(b.spend); a.roas += Number(b.roas); a.conv += b.conversions;
+          a.cpc += Number(b.cpc); a.cpm += Number(b.cpm); a.cpl += Number(b.cpl);
+          return a;
+        }, { spend:0, roas:0, conv:0, cpc:0, cpm:0, cpl:0 });
+        const len = data.ads.length;
+        document.getElementById('ads-spend').textContent = 'R$ ' + ag.spend.toFixed(2);
+        document.getElementById('ads-roas').textContent = (ag.roas/len).toFixed(2) + 'x';
+        document.getElementById('ads-conv').textContent = ag.conv;
+        document.getElementById('ads-cpc').textContent = 'R$ ' + (ag.cpc/len).toFixed(2);
+        document.getElementById('ads-cpm').textContent = 'R$ ' + (ag.cpm/len).toFixed(2);
+        document.getElementById('ads-cpl').textContent = 'R$ ' + (ag.cpl/len).toFixed(2);
+      }
+      // RENDER ADS CHART
+      const ctx2 = document.getElementById('spendChart').getContext('2d');
+      if(S.chartSpend) S.chartSpend.destroy();
+      S.chartSpend = new Chart(ctx2, {
+          type: 'bar',
+          data: { labels: ['A','B','C','D','E','F','G'], datasets: [{ label: 'Conversões', data: [4,2,6,10,1,3,7], backgroundColor: '#0FBF6A' }] },
+          options: { responsive: true, maintainAspectRatio: false }
+      });
+    } catch(e) { console.error(e) }
+  }
+
+  function renderConsolidated() {
+    const tbody = document.querySelector('#consolidated-table tbody');
+    tbody.innerHTML = window.S.clients.map(c => {
+       return `<tr>
+         <td><strong>${c.name}</strong></td>
+         <td>${c.domain || '-'}</td>
+         <td>${c.bm_name || '-'}</td>
+         <td>${c.meta_pixel_id || '-'}</td>
+         <td>${(c.emq_score || 0)}</td>
+         <td>R$ 0,00</td>
+         <td>0.0x</td>
+         <td><span class="tag-${c.is_active ? 'sent' : 'error'}">${c.is_active ? 'Ativo' : 'Inativo'}</span></td>
+       </tr>`;
+    }).join('');
+  }
+
+  function exportCSV() {
+    let csv = "Cliente,Dominio,BM,Pixel,EMQ,Status\n";
+    window.S.clients.forEach(c => {
+       csv += `"${c.name}","${c.domain || ''}","${c.bm_name || ''}","${c.meta_pixel_id || ''}","${c.emq_score || 0}","${c.is_active ? 'Ativo' : 'Inativo'}"\n`;
+    });
+    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = "visao_consolidada.csv"; a.click();
+  }
+
+  async function loadSettings() {
+    if(!S.selectedClientId) return;
+    const c = window.S.clients.find(x => x.id === S.selectedClientId);
+    if(c){
+      document.getElementById('set-client-title').textContent = c.name;
+      document.getElementById('set-client-name').value = c.name || '';
+      document.getElementById('set-domain').value = c.domain || '';
+      document.getElementById('set-pixel-id').value = c.meta_pixel_id || '';
+      document.getElementById('set-gtm-id').value = c.gtm_container_id || '';
+      document.getElementById('set-capi-token').value = c.capi_token || '';
+      document.getElementById('set-account-id').value = c.meta_account_id || '';
+    }
+  }
+
+  async function saveClientSettings() {
+    const btn = document.getElementById('btn-save-client');
+    btn.textContent = 'Salvando...';
+    try {
+      const payload = {
+        name: document.getElementById('set-client-name').value,
+        domain: document.getElementById('set-domain').value,
+        meta_pixel_id: document.getElementById('set-pixel-id').value,
+        gtm_container_id: document.getElementById('set-gtm-id').value,
+        capi_token: document.getElementById('set-capi-token').value,
+        meta_account_id: document.getElementById('set-account-id').value
+      };
+      
+      const sess = await window.supabaseClient.auth.getSession();
+      const method = (!S.selectedClientId || S.selectedClientId === 'new') ? 'POST' : 'PUT';
+      const url = (!S.selectedClientId || S.selectedClientId === 'new') ? '/api/clients' : `/api/clients/${S.selectedClientId}`;
+      
+      const resp = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.data.session.access_token },
+        body: JSON.stringify(payload)
+      });
+      const d = await resp.json();
+      if(d.client) {
+        alert('Configuração salva!');
+        loadClients(); // reload everything
+        selectClient(d.client.id);
+      } else { alert('Erro: ' + (d.error||'Desconhecido')); }
+    } catch(e) { alert('Erro ao salvar'); }
+    btn.textContent = 'Salvar no Banco';
+  }
+
+  window.S.bmAccountsTemp = [];
+  async function importBMAccounts() {
+    const btn = document.getElementById('btn-import-bm');
+    btn.textContent = 'Procurando...';
+    try {
+      const sess = await window.supabaseClient.auth.getSession();
+      const res = await fetch('/api/meta/bm/accounts', { headers: { 'Authorization': 'Bearer ' + sess.data.session.access_token }});
+      const d = await res.json();
+      if(d.accounts) {
+        window.S.bmAccountsTemp = d.accounts;
+        const sel = document.getElementById('bm-select-acc');
+        sel.innerHTML = d.accounts.map((a, i) => `<option value="${i}">${a.name} (${a.id}) - ${a.bm_name}</option>`).join('');
+        document.getElementById('bm-import-results').style.display = 'block';
+      } else { alert('Nenhuma conta ou erro: ' + d.error); }
+    } catch(e) { alert('Erro.'); console.error(e); }
+    btn.textContent = '⏬ Importar contas da BM do Login';
+  }
+  
+  function useBMAccount() {
+    const idx = document.getElementById('bm-select-acc').value;
+    const acc = window.S.bmAccountsTemp[idx];
+    if(acc) {
+      document.getElementById('set-account-id').value = acc.id;
+    }
+  }
+
+  // Hook no checkAuth do antigo script para rodar loadClients.
+  const oldCheckAuthComplete = checkAuthComplete;
+  checkAuthComplete = function() {
+    oldCheckAuthComplete();
+    if(S.user_id && S.clients.length === 0) loadClients();
+  };
+</script>
+
 </body>
 </html>

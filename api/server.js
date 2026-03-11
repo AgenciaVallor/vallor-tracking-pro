@@ -49,6 +49,7 @@ const authMeta     = require('./auth-meta');
 const authMetaCb   = require('./auth-meta-cb');
 const gtmHandler   = require('./gtm');
 const metaHandler  = require('./meta');
+const metaClientsHandler = require('./meta-clients');
 const clientsHandler = require('./clients');
 const sessionHandler = require('./session');
 const configHandler  = require('./config');
@@ -66,11 +67,16 @@ const webhooksHandler = require('./webhooks');
 const audiencesHandler = require('./audiences');
 const alertsHandler = require('./alerts');
 const dashboardHandler = require('./dashboard');
+const syncHandler = require('./sync');
 
 // GTM API (todas as operações)
 app.all('/api/gtm/:action', gtmHandler);
 
 // Meta API (verificar pixel, CAPI)
+app.all('/api/meta/bm/*', metaClientsHandler);
+app.all('/api/meta/pixels/*', metaClientsHandler);
+app.all('/api/meta/insights/*', metaClientsHandler);
+app.all('/api/meta/pixel-quality/*', metaClientsHandler);
 app.all('/api/meta/:action', metaHandler);
 
 // Clientes (Supabase)
@@ -83,6 +89,7 @@ app.all('/api/webhooks/:platform', webhooksHandler);
 app.post('/api/audiences/sync', audiencesHandler);
 app.get('/api/alerts/check', alertsHandler);
 app.get('/api/dashboard', dashboardHandler);
+app.all('/api/sync/*', syncHandler);
 
 // Info de sessão (tokens ativos)
 app.get('/api/session', sessionHandler);

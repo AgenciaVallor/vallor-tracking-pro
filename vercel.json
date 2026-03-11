@@ -16,9 +16,14 @@
     { "src": "/auth/meta", "dest": "/api/auth-meta.js" },
     { "src": "/auth/meta/callback", "dest": "/api/auth-meta-cb.js" },
     { "src": "/api/gtm/(.*)", "dest": "/api/gtm.js" },
+    { "src": "/api/meta/bm/(.*)", "dest": "/api/meta-clients.js" },
+    { "src": "/api/meta/pixels/(.*)", "dest": "/api/meta-clients.js" },
+    { "src": "/api/meta/insights/(.*)", "dest": "/api/meta-clients.js" },
+    { "src": "/api/meta/pixel-quality/(.*)", "dest": "/api/meta-clients.js" },
     { "src": "/api/meta/(.*)", "dest": "/api/meta.js" },
     { "src": "/api/clients(.*)", "dest": "/api/clients.js" },
     { "src": "/api/track", "dest": "/api/tracking.js" },
+    { "src": "/api/sync/(.*)", "dest": "/api/sync.js" },
     { "src": "/api/webhooks/(.*)", "dest": "/api/webhooks.js" },
     { "src": "/api/audiences/sync", "dest": "/api/audiences.js" },
     { "src": "/api/alerts/check", "dest": "/api/alerts.js" },
@@ -37,6 +42,12 @@
         { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/sync/all",
+      "schedule": "0 */6 * * *"
     }
   ]
 }
