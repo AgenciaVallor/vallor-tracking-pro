@@ -5,6 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Vallor Tracking PRO</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // PROTEÇÃO DE ROTA (Auth check)
+  async function checkAuth() {
+    try {
+      const r = await fetch('/api/config');
+      const config = await r.json();
+      const sb = supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      const { data: { session } } = await sb.auth.getSession();
+      
+      if (!session) {
+        window.location.href = '/login';
+      }
+      window.supabaseClient = sb;
+    } catch (e) {
+      console.error('Erro no checkAuth:', e);
+      window.location.href = '/login';
+    }
+  }
+  checkAuth();
+
+  async function handleLogout() {
+    if (window.supabaseClient) {
+      await window.supabaseClient.auth.signOut();
+      window.location.href = '/login';
+    }
+  }
+</script>
 <style>
 :root {
   --bg: #04080F;
@@ -366,7 +394,10 @@ footer em{color:var(--gold-dim);font-style:normal;}
 <div class="wrap">
   <nav>
     <div class="logo">VALLOR <span>Tracking PRO</span></div>
-    <div class="nav-badge">● Interno v1.0</div>
+    <div style="display:flex;align-items:center;gap:15px;">
+      <div class="nav-badge">● Interno v1.0</div>
+      <a onclick="handleLogout()" style="font-size:12px;color:var(--gray);cursor:pointer;text-decoration:none;">Sair</a>
+    </div>
   </nav>
 
   <!-- HERO -->

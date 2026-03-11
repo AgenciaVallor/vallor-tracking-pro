@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vallor Tracking PRO — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dim: #8A6F2E;
+    --black: #0A0A0A;
+    --dark: #111111;
+    --card: #161616;
+    --border: rgba(201,168,76,0.2);
+    --text: #F0EDE8;
+    --muted: #7A7570;
+  }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--black);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Background atmosphere */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 80% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse 30% 40% at 50% 100%, rgba(201,168,76,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Grid texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    padding: 20px;
+    animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Logo */
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeUp 0.8s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    margin-bottom: 16px;
+    position: relative;
+    background: rgba(201,168,76,0.05);
+  }
+
+  .logo-icon::before {
+    content: 'V';
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .logo-icon::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.3), transparent 60%);
+    pointer-events: none;
+  }
+
+  .logo-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    color: var(--text);
+  }
+
+  .logo-name span {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.8s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Input group */
+  .field {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+    -webkit-appearance: none;
+  }
+
+  input:focus {
+    border-color: var(--gold-dim);
+    background: rgba(201,168,76,0.04);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+  }
+
+  input.error {
+    border-color: #C0392B;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+  }
+
+  /* Password toggle */
+  .toggle-pw {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+  }
+
+  .toggle-pw:hover { color: var(--gold); }
+  .toggle-pw svg { width: 18px; height: 18px; }
+
+  input[type="password"], input[type="text"] { padding-right: 46px; }
+
+  /* Notification message */
+  .msg-box {
+    font-size: 11px;
+    margin-top: 6px;
+    display: none;
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .msg-box.err { color: #E74C3C; display: block; animation: shake 0.3s ease; }
+  .msg-box.ok { color: var(--gold); display: block; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  /* Forgot password */
+  .forgot {
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 28px;
+  }
+
+  .forgot a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    cursor: pointer;
+  }
+
+  .forgot a:hover { color: var(--gold); }
+
+  /* Submit button */
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold-dim) 0%, var(--gold) 50%, var(--gold-light) 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #0A0A0A;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.3s, opacity 0.3s;
+    box-shadow: 0 4px 24px rgba(201,168,76,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-login::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 32px rgba(201,168,76,0.35);
+  }
+
+  .btn-login:hover::before { opacity: 1; }
+  .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .btn-login.loading .btn-text { display: none; }
+  .btn-login.loading .spinner { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Success overlay */
+  .success-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: var(--card);
+    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.4s ease;
+    z-index: 10;
+  }
+
+  .success-overlay.show { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .success-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: scaleIn 0.4s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .success-icon svg { color: var(--gold); width: 28px; height: 28px; }
+  .success-text { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--text); }
+  .success-sub { font-size: 12px; color: var(--muted); }
+
+  .footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 11px;
+    color: rgba(122,117,112,0.5);
+    letter-spacing: 0.05em;
+    animation: fadeUp 0.8s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo-wrap">
+    <div class="logo-icon"></div>
+    <div class="logo-name">VALLOR <span>TRACKING</span></div>
+    <div class="logo-sub">Pro Dashboard</div>
+  </div>
+
+  <div class="card">
+    <div class="success-overlay" id="successOverlay">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="success-text">Acesso autorizado</div>
+      <div class="success-sub">Redirecionando para o dashboard...</div>
+    </div>
+
+    <div class="card-title">Bem-vindo de volta</div>
+    <div class="card-sub">Entre com suas credenciais para acessar</div>
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <div class="input-wrap">
+        <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="msg-box" id="emailErr"></div>
+    </div>
+
+    <div class="field">
+      <label for="password">Senha</label>
+      <div class="input-wrap">
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        <button class="toggle-pw" id="togglePw" type="button" aria-label="Mostrar senha">
+          <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+      <div class="msg-box" id="pwErr"></div>
+    </div>
+
+    <div class="forgot"><a id="forgotBtn">Esqueci minha senha</a></div>
+
+    <button class="btn-login" id="btnLogin" type="button">
+      <span class="btn-text">Entrar</span>
+      <div class="spinner"></div>
+    </button>
+  </div>
+
+  <div class="footer">© 2026 Vallor Tracking PRO · Grupo Vallor</div>
+</div>
+
+<script>
+  let supabaseClient;
+  
+  const emailInput = document.getElementById('email');
+  const pwInput    = document.getElementById('password');
+  const emailErr   = document.getElementById('emailErr');
+  const pwErr      = document.getElementById('pwErr');
+  const btnLogin   = document.getElementById('btnLogin');
+  const forgotBtn  = document.getElementById('forgotBtn');
+  const togglePw   = document.getElementById('togglePw');
+  const eyeIcon    = document.getElementById('eyeIcon');
+  const overlay    = document.getElementById('successOverlay');
+
+  const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+
+  let pwVisible = false;
+
+  togglePw.addEventListener('click', () => {
+    pwVisible = !pwVisible;
+    pwInput.type = pwVisible ? 'text' : 'password';
+    eyeIcon.innerHTML = pwVisible ? eyeClosed : eyeOpen;
+  });
+
+  // Inicializar Supabase com as configs do servidor
+  async function initSupabase() {
+    try {
+      const r = await fetch('/api/config');
+      const config = await r.json();
+      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      
+      // Checar se já está logado
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        window.location.href = '/';
+      }
+    } catch (e) {
+      console.error('Falha ao inicializar Supabase:', e);
+    }
+  }
+
+  function showMsg(el, msg, type = 'err') {
+    el.textContent = msg;
+    el.className = 'msg-box ' + type;
+  }
+
+  function clearMsgs() {
+    emailErr.className = 'msg-box';
+    pwErr.className = 'msg-box';
+    emailInput.classList.remove('error');
+    pwInput.classList.remove('error');
+  }
+
+  btnLogin.addEventListener('click', async () => {
+    clearMsgs();
+    const email = emailInput.value.trim();
+    const password = pwInput.value;
+
+    if (!email) return showMsg(emailErr, 'Insira seu email');
+    if (!password) return showMsg(pwErr, 'Insira sua senha');
+
+    btnLogin.classList.add('loading');
+    btnLogin.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email, password
+      });
+
+      if (error) throw error;
+
+      overlay.classList.add('show');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
+
+    } catch (e) {
+      showMsg(pwErr, e.message || 'Erro ao entrar');
+      btnLogin.classList.remove('loading');
+      btnLogin.disabled = false;
+    }
+  });
+
+  forgotBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    if (!email) return showMsg(emailErr, 'Insira o email para recuperar a senha');
+    
+    try {
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login'
+      });
+      if (error) throw error;
+      showMsg(emailErr, 'Email de recuperação enviado!', 'ok');
+    } catch (e) {
+      showMsg(emailErr, e.message);
+    }
+  });
+
+  initSupabase();
+</script>
+</body>
+</html>

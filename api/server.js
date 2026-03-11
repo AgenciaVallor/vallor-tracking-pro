@@ -37,6 +37,11 @@ app.use(session({
 // ── Static files ──────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '../public')));
 
+// ── Auth / Login Page ────────────────────────────────────────
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/login.html'));
+});
+
 // ── Auth Routes ───────────────────────────────────────────────
 const authGoogle   = require('./auth-google');
 const authGoogleCb = require('./auth-google-cb');
@@ -46,6 +51,7 @@ const gtmHandler   = require('./gtm');
 const metaHandler  = require('./meta');
 const clientsHandler = require('./clients');
 const sessionHandler = require('./session');
+const configHandler  = require('./config');
 
 // Google OAuth
 app.get('/auth/google', authGoogle);
@@ -68,8 +74,12 @@ app.all('/api/clients/:id', clientsHandler);
 // Info de sessão (tokens ativos)
 app.get('/api/session', sessionHandler);
 
+// Config publicas
+app.get('/api/config', configHandler);
+
 // ── Catch-all → index.html ────────────────────────────────────
 app.get('*', (req, res) => {
+  // Se não estiver logado (logica simplificada para SPA), o frontend redireciona
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
