@@ -451,8 +451,12 @@
   async function initSupabase() {
     try {
       const r = await fetch('/api/config');
+      if (!r.ok) throw new Error('Falha ao obter chaves');
       const config = await r.json();
-      supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseKey);
+      
+      // Conforme solicitado: const { createClient } = supabase
+      const { createClient } = window.supabase;
+      supabaseClient = createClient(config.supabaseUrl, config.supabaseKey);
       
       // Checar se já está logado
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -461,6 +465,7 @@
       }
     } catch (e) {
       console.error('Falha ao inicializar Supabase:', e);
+      showMsg(pwErr, 'Erro de conexão com o banco de dados.');
     }
   }
 
