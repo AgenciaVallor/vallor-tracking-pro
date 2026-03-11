@@ -425,109 +425,25 @@
 </div>
 
 <script>
-  let supabaseClient;
-  
-  const emailInput = document.getElementById('email');
-  const pwInput    = document.getElementById('password');
-  const emailErr   = document.getElementById('emailErr');
-  const pwErr      = document.getElementById('pwErr');
-  const btnLogin   = document.getElementById('btnLogin');
-  const forgotBtn  = document.getElementById('forgotBtn');
-  const togglePw   = document.getElementById('togglePw');
-  const eyeIcon    = document.getElementById('eyeIcon');
-  const overlay    = document.getElementById('successOverlay');
+async function initLogin() {
+  const res = await fetch('/api/config');
+  const { supabaseUrl, supabaseKey } = await res.json();
+  const { createClient } = window.supabase;
+  const client = createClient(supabaseUrl, supabaseKey);
 
-  const eyeOpen = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
-  const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
-
-  let pwVisible = false;
-
-  togglePw.addEventListener('click', () => {
-    pwVisible = !pwVisible;
-    pwInput.type = pwVisible ? 'text' : 'password';
-    eyeIcon.innerHTML = pwVisible ? eyeClosed : eyeOpen;
-  });
-
-  // Inicializar Supabase com as configs do servidor
-  async function initSupabase() {
-    try {
-      const r = await fetch('/api/config');
-      if (!r.ok) throw new Error('Falha ao obter chaves');
-      const config = await r.json();
-      
-      // Conforme solicitado: const { createClient } = supabase
-      const { createClient } = window.supabase;
-      supabaseClient = createClient(config.supabaseUrl, config.supabaseKey);
-      
-      // Checar se já está logado
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        window.location.href = '/';
-      }
-    } catch (e) {
-      console.error('Falha ao inicializar Supabase:', e);
-      showMsg(pwErr, 'Erro de conexão com o banco de dados.');
-    }
-  }
-
-  function showMsg(el, msg, type = 'err') {
-    el.textContent = msg;
-    el.className = 'msg-box ' + type;
-  }
-
-  function clearMsgs() {
-    emailErr.className = 'msg-box';
-    pwErr.className = 'msg-box';
-    emailInput.classList.remove('error');
-    pwInput.classList.remove('error');
-  }
-
-  btnLogin.addEventListener('click', async () => {
-    clearMsgs();
-    const email = emailInput.value.trim();
-    const password = pwInput.value;
-
-    if (!email) return showMsg(emailErr, 'Insira seu email');
-    if (!password) return showMsg(pwErr, 'Insira sua senha');
-
-    btnLogin.classList.add('loading');
-    btnLogin.disabled = true;
-
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email, password
-      });
-
-      if (error) throw error;
-
-      overlay.classList.add('show');
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
-
-    } catch (e) {
-      showMsg(pwErr, e.message || 'Erro ao entrar');
-      btnLogin.classList.remove('loading');
-      btnLogin.disabled = false;
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) {
+      document.getElementById('pwErr').textContent = error.message;
+      document.getElementById('pwErr').classList.add('show');
+    } else {
+      window.location.href = '/';
     }
   });
-
-  forgotBtn.addEventListener('click', async () => {
-    const email = emailInput.value.trim();
-    if (!email) return showMsg(emailErr, 'Insira o email para recuperar a senha');
-    
-    try {
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/login'
-      });
-      if (error) throw error;
-      showMsg(emailErr, 'Email de recuperação enviado!', 'ok');
-    } catch (e) {
-      showMsg(emailErr, e.message);
-    }
-  });
-
-  initSupabase();
+}
+initLogin();
 </script>
 </body>
 </html>
