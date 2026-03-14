@@ -1052,51 +1052,7 @@ function renderChart(chartData) {
   });
 }
 
-async function loadSettings() {
-  if (!S.user_id) return;
-  const { data: settings } = await window.supabaseClient.from('user_settings').select('*').eq('user_id', S.user_id).single();
-  if (settings) {
-    document.getElementById('set-capi-token').value = settings.meta_access_token || '';
-    document.getElementById('set-pixel-id').value = settings.meta_pixel_id || '';
-    document.getElementById('set-gtm-id').value = settings.gtm_container_id || '';
-    document.getElementById('set-account-id').value = settings.meta_account_id || '';
-    
-    // Gerar Snippet
-    const snippet = `<!-- GTM (Vallor Tracking PRO) -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','${settings.gtm_container_id || 'GTM-XXXXXX'}');<\/script>`;
-    document.getElementById('gtm-snippet-global').textContent = snippet;
-  }
-  
-  // API Key do usuário (mock ou campo da tabela se existir)
-  document.getElementById('user-api-key').textContent = S.user_id.split('-')[0].toUpperCase();
-}
-
-async function saveSettings() {
-  const meta_access_token = document.getElementById('set-capi-token').value;
-  const meta_pixel_id     = document.getElementById('set-pixel-id').value;
-  const gtm_container_id  = document.getElementById('set-gtm-id').value;
-  const meta_account_id   = document.getElementById('set-account-id').value;
-
-  const { error } = await window.supabaseClient.from('user_settings').upsert({
-    user_id: S.user_id,
-    meta_access_token,
-    meta_pixel_id,
-    gtm_container_id,
-    meta_account_id,
-    updated_at: new Date()
-  });
-
-  if (!error) {
-    showSettingsAlert('Configurações salvas com sucesso!', 'g');
-    loadSettings();
-  } else {
-    showSettingsAlert('Erro ao salvar: ' + error.message, 'r');
-  }
-}
+// Duplicate loadSettings removed. Keeper is at line 2522 (orig) / 2154 (new).
 
 async function loadAlerts() {
   const { data: alerts } = await window.supabaseClient.from('alerts').select('*').eq('user_id', S.user_id).order('created_at', {ascending: false});
@@ -1154,55 +1110,54 @@ async function syncAudiences() {
 // HANDLE OAUTH CALLBACK ON PAGE LOAD
 // ══════════════════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  // FIRST: restore everything from localStorage
+  // Restore other platform state from localStorage
   const gToken = localStorage.getItem('vallor_google_token');
   const mToken = localStorage.getItem('vallor_meta_token');
-  const gConn = localStorage.getItem('vallor_google_connected') === '1';
-  const mConn = localStorage.getItem('vallor_meta_connected') === '1';
+  const gConn = localStorage.getItem('vallor_google_connected')==='1';
+  const mConn = localStorage.getItem('vallor_meta_connected')==='1';
 
   if (gToken) { S.googleToken = gToken; S.googleConnected = true; }
+  else if (gConn) { S.googleConnected = true; }
   if (mToken) { S.metaToken = mToken; S.metaConnected = true; }
-  if (gConn && !gToken) S.googleConnected = true;
-  if (mConn && !mToken) S.metaConnected = true;
+  else if (mConn) { S.metaConnected = true; }
 
-  // SECOND: restore form fields
   restoreState();
 
-  // THIRD: process new OAuth callback from URL
-  const hash = window.location.hash;
-  const params = new URLSearchParams(window.location.search);
+  // Check backend OAuth return params
+  const p = new URLSearchParams(window.location.search);
 
-  if (hash.includes('access_token')) {
-    const hp = new URLSearchParams(hash.replace('#', ''));
-    const token = hp.get('access_token');
-    const state = hp.get('state');
-    if (token && state === 'google_auth') {
-      S.googleToken = token;
-      S.googleConnected = true;
-      localStorage.setItem('vallor_google_token', token);
-      localStorage.setItem('vallor_google_connected', '1');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }
-
-  if (params.get('code') && params.get('state') === 'meta_auth') {
+  if (p.get('google') === 'connected') {
+    S.googleConnected = true;
+    localStorage.setItem('vallor_google_connected', '1');
     window.history.replaceState({}, '', window.location.pathname);
-    handleMetaCode(params.get('code'));
-    return;
   }
 
-  // FOURTH: update UI for both platforms independently
+  if (p.get('meta') === 'connected') {
+    S.metaConnected = true;
+    localStorage.setItem('vallor_meta_connected', '1');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
+  const err = p.get('error');
+  if (err) {
+    console.error('OAuth error:', decodeURIComponent(err));
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+
   if (S.googleConnected) setConnected('google');
   if (S.metaConnected) setConnected('meta');
 
   checkAuthComplete();
   validateInputs();
-  
-  // Default range setup
+
+  // Confirm with backend session
+  checkSession();
+
   const d = new Date();
-  document.getElementById('custom-end').valueAsDate = d;
-  d.setDate(d.getDate() - 7);
-  document.getElementById('custom-start').valueAsDate = d;
+  const startEl = document.getElementById('custom-start');
+  const endEl = document.getElementById('custom-end');
+  if(endEl) endEl.valueAsDate = d;
+  if(startEl) { d.setDate(d.getDate()-7); startEl.valueAsDate = d; }
 });
 
 function restoreState() {
@@ -1226,68 +1181,16 @@ function restoreState() {
 // ══════════════════════════════════════════════════════════════════════════
 function authGoogle() {
   saveFormState();
-  const btn = document.getElementById('btn-google');
-  btn.classList.add('connecting');
-  document.getElementById('gs').textContent = 'Abrindo login Google...';
-
-  localStorage.setItem('vallor_google_token', S.googleToken || '');
   localStorage.setItem('vallor_meta_token', S.metaToken || '');
-  localStorage.setItem('vallor_google_connected', S.googleConnected ? '1' : '0');
   localStorage.setItem('vallor_meta_connected', S.metaConnected ? '1' : '0');
-  localStorage.setItem('vallor_pre_auth', 'google');
-
-  const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-  url.searchParams.set('client_id', CONFIG.GOOGLE_CLIENT_ID);
-  url.searchParams.set('redirect_uri', CONFIG.REDIRECT_URI);
-  url.searchParams.set('response_type', 'token');
-  url.searchParams.set('scope', CONFIG.SCOPES_GOOGLE);
-  url.searchParams.set('state', 'google_auth');
-  url.searchParams.set('prompt', 'consent');
-  url.searchParams.set('access_type', 'online');
-
-  window.location.href = url.toString();
+  window.location.href = '/auth/google';
 }
 
 function authMeta() {
   saveFormState();
-  const btn = document.getElementById('btn-meta');
-  btn.classList.add('connecting');
-  document.getElementById('ms').textContent = 'Abrindo login Meta...';
-
   localStorage.setItem('vallor_google_token', S.googleToken || '');
-  localStorage.setItem('vallor_meta_token', S.metaToken || '');
   localStorage.setItem('vallor_google_connected', S.googleConnected ? '1' : '0');
-  localStorage.setItem('vallor_meta_connected', S.metaConnected ? '1' : '0');
-  localStorage.setItem('vallor_pre_auth', 'meta');
-
-  const url = new URL('https://www.facebook.com/v19.0/dialog/oauth');
-  url.searchParams.set('client_id', CONFIG.META_APP_ID);
-  url.searchParams.set('redirect_uri', CONFIG.REDIRECT_URI);
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', CONFIG.SCOPES_META);
-  url.searchParams.set('state', 'meta_auth');
-
-  window.location.href = url.toString();
-}
-
-function handleMetaCode(code) {
-  // Meta requires backend to exchange code for token (CORS restriction)
-  // For internal use: prompt user to enter token manually
-  const token = prompt(
-    '⚠️ PASSO FINAL META:\n\n' +
-    'A Meta requer que o token seja gerado via servidor.\n\n' +
-    'Para uso interno, cole aqui o token de acesso do Pixel:\n' +
-    '(Gerenciador de Eventos → Configurações → API de Conversões → Gerar Token)\n\n' +
-    'Cole o token abaixo:'
-  );
-  if (token && token.length > 10) {
-    S.metaToken = token;
-    S.metaConnected = true;
-    localStorage.setItem('vallor_meta_token', token);
-    localStorage.setItem('vallor_meta_connected', '1');
-    setConnected('meta');
-    checkAuthComplete();
-  }
+  window.location.href = '/auth/meta';
 }
 
 function setConnected(platform) {
@@ -2052,40 +1955,7 @@ async function checkSession() {
   }
 }
 
-// --- Override: redirecionar para backend OAuth ---
-function authGoogle() {
-  saveFormState();
-  window.location.href = '/auth/google';
-}
-
-function authMeta() {
-  saveFormState();
-  window.location.href = '/auth/meta';
-}
-
-// --- Verificar retorno OAuth (params na URL) ---
-(function checkOAuthReturn() {
-  const p = new URLSearchParams(window.location.search);
-  if (p.get('google') === 'connected') {
-    S.googleConnected = true;
-    localStorage.setItem('vallor_google_connected', '1');
-    setConnected('google');
-    window.history.replaceState({}, '', '/');
-    log('Google conectado com sucesso via OAuth!', 'info');
-  }
-  if (p.get('meta') === 'connected') {
-    S.metaConnected = true;
-    localStorage.setItem('vallor_meta_connected', '1');
-    setConnected('meta');
-    window.history.replaceState({}, '', '/');
-    log('Meta conectada com sucesso via OAuth!', 'info');
-  }
-  const err = p.get('error');
-  if (err) {
-    console.error('[OAuth] Erro:', decodeURIComponent(err));
-    window.history.replaceState({}, '', '/');
-  }
-})();
+// Check session logic removed, handled in load listener.
 
 // --- Setup via backend (GTM API no servidor) ---
 async function runSetupViaBackend(data) {
@@ -2635,137 +2505,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('set-account-id').value = '';
     switchView('settings');
   }
-</script>
-
-</body>
-</html>
-  }
-
-  function renderConsolidated() {
-    const tbody = document.querySelector('#consolidated-table tbody');
-    tbody.innerHTML = window.S.clients.map(c => {
-       return `<tr>
-         <td><strong>${c.name}</strong></td>
-         <td>${c.domain || '-'}</td>
-         <td>${c.bm_name || '-'}</td>
-         <td>${c.meta_pixel_id || '-'}</td>
-         <td>${(c.emq_score || 0)}</td>
-         <td>R$ 0,00</td>
-         <td>0.0x</td>
-         <td><span class="tag-${c.is_active ? 'sent' : 'error'}">${c.is_active ? 'Ativo' : 'Inativo'}</span></td>
-       </tr>`;
-    }).join('');
-  }
-
-  function exportCSV() {
-    let csv = "Cliente,Dominio,BM,Pixel,EMQ,Status\n";
-    window.S.clients.forEach(c => {
-       csv += `"${c.name}","${c.domain || ''}","${c.bm_name || ''}","${c.meta_pixel_id || ''}","${c.emq_score || 0}","${c.is_active ? 'Ativo' : 'Inativo'}"\n`;
-    });
-    const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = "visao_consolidada.csv"; a.click();
-  }
-
-  async function loadSettings() {
-    if(!S.selectedClientId) return;
-    const c = window.S.clients.find(x => x.id === S.selectedClientId);
-    if(c){
-      document.getElementById('set-client-title').textContent = c.name;
-      document.getElementById('set-client-name').value = c.name || '';
-      document.getElementById('set-domain').value = c.domain || '';
-      document.getElementById('set-pixel-id').value = c.meta_pixel_id || '';
-      document.getElementById('set-gtm-id').value = c.gtm_container_id || '';
-      document.getElementById('set-capi-token').value = c.capi_token || '';
-      document.getElementById('set-account-id').value = c.meta_account_id || '';
-    }
-  }
-
-  async function saveClientSettings() {
-    const btn = document.getElementById('btn-save-client');
-    const alertBox = document.getElementById('settings-alert');
-    btn.textContent = 'Salvando...';
-    alertBox.style.display = 'none';
-
-    try {
-      const payload = {
-        name: document.getElementById('set-client-name').value,
-        domain: document.getElementById('set-domain').value,
-        meta_pixel_id: document.getElementById('set-pixel-id').value,
-        gtm_container_id: document.getElementById('set-gtm-id').value,
-        capi_token: document.getElementById('set-capi-token').value,
-        meta_account_id: document.getElementById('set-account-id').value,
-        business_name: S.pendingAdAccount?.businessName || '',
-        account_status: S.pendingAdAccount?.status || ''
-      };
-      
-      const sess = await window.supabaseClient.auth.getSession();
-      const method = (!S.selectedClientId || S.selectedClientId === 'new') ? 'POST' : 'PUT';
-      const url = (!S.selectedClientId || S.selectedClientId === 'new') ? '/api/clients' : `/api/clients/${S.selectedClientId}`;
-      
-      const resp = await fetch(url, {
-        method, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.data.session.access_token },
-        body: JSON.stringify(payload)
-      });
-      const d = await resp.json();
-      if(d.client) {
-        showSettingsAlert('Configuração salva com sucesso!', 'g');
-        loadClients(); // reload everything
-        selectClient(d.client.id);
-      } else { 
-        showSettingsAlert('Erro: ' + (d.error||'Desconhecido'), 'r');
-      }
-    } catch(e) { 
-      showSettingsAlert('Erro ao salvar no servidor.', 'r');
-    }
-    btn.textContent = 'Salvar no Banco';
-  }
-
-  function showSettingsAlert(msg, type) {
-    const box = document.getElementById('settings-alert');
-    box.className = 'alert alert-' + type;
-    box.innerHTML = `<span>${type==='r'?'❌':'✅'}</span><span>${msg}</span>`;
-    box.style.display = 'flex';
-    if(type === 'g') setTimeout(() => box.style.display = 'none', 5000);
-  }
-
-  window.S.bmAccountsTemp = [];
-  async function importBMAccounts() {
-    const btn = document.getElementById('btn-import-bm');
-    btn.textContent = 'Procurando...';
-    try {
-      const sess = await window.supabaseClient.auth.getSession();
-      const res = await fetch('/api/meta/bm/accounts', { headers: { 'Authorization': 'Bearer ' + sess.data.session.access_token }});
-      const d = await res.json();
-      if(d.accounts) {
-        window.S.bmAccountsTemp = d.accounts;
-        const sel = document.getElementById('bm-select-acc');
-        sel.innerHTML = d.accounts.map((a, i) => `<option value="${i}">${a.name} (${a.id}) - ${a.bm_name}</option>`).join('');
-        document.getElementById('bm-import-results').style.display = 'block';
-      } else { 
-        showSettingsAlert('Nenhuma conta ou erro: ' + (d.error || 'Desconhecido'), 'r');
-      }
-    } catch(e) { 
-      showSettingsAlert('Erro ao importar contas da BM.', 'r');
-      console.error(e); 
-    }
-    btn.textContent = '⏬ Importar contas da BM do Login';
-  }
-  
-  function useBMAccount() {
-    const idx = document.getElementById('bm-select-acc').value;
-    const acc = window.S.bmAccountsTemp[idx];
-    if(acc) {
-      document.getElementById('set-account-id').value = acc.id;
-    }
-  }
-
-  // Hook no checkAuth do antigo script para rodar loadClients.
-  const oldCheckAuthComplete = checkAuthComplete;
-  checkAuthComplete = function() {
-    oldCheckAuthComplete();
-    if(S.user_id && S.clients.length === 0) loadClients();
-  };
 </script>
 
 </body>
