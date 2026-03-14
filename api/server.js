@@ -68,6 +68,7 @@ const audiencesHandler = require('./audiences');
 const alertsHandler = require('./alerts');
 const dashboardHandler = require('./dashboard');
 const syncHandler = require('./sync');
+const analyticsHandler = require('./analytics');
 
 // GTM API (todas as operações)
 app.all('/api/gtm/:action', gtmHandler);
@@ -89,6 +90,7 @@ app.all('/api/webhooks/:platform', webhooksHandler);
 app.post('/api/audiences/sync', audiencesHandler);
 app.get('/api/alerts/check', alertsHandler);
 app.get('/api/dashboard', dashboardHandler);
+app.get('/api/analytics', analyticsHandler);
 app.all('/api/sync/*', syncHandler);
 
 // Info de sessão (tokens ativos)

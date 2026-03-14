@@ -59,20 +59,29 @@ module.exports = async function clientsHandler(req, res) {
         .single();
       if (cErr) throw cErr;
 
-      // buscar metrics
-      const { data: tracking, error: tErr } = await supabase
-        .from('tracking_metrics')
-        .select('*')
-        .eq('client_id', id)
-        .order('date', { ascending: false });
-        
-      const { data: ads, error: aErr } = await supabase
-        .from('ads_metrics')
-        .select('*')
-        .eq('client_id', id)
-        .order('date', { ascending: false });
+      // buscar metrics filtradas por data
+      const { startTime, endTime } = req.query;
+      
+      let trackQuery = supabase.from('tracking_metrics').select('*').eq('client_id', id);
+      let adsQuery   = supabase.from('ads_metrics').select('*').eq('client_id', id);
+      let configQuery = supabase.from('configurations').select('*').eq('client_id', id);
 
-      return res.json({ client, tracking, ads });
+      if (startTime) {
+        trackQuery = trackQuery.gte('date', startTime);
+        adsQuery   = adsQuery.gte('date', startTime);
+        configQuery = configQuery.gte('created_at', startTime);
+      }
+      if (endTime) {
+        trackQuery = trackQuery.lte('date', endTime);
+        adsQuery   = adsQuery.lte('date', endTime);
+        configQuery = configQuery.lte('created_at', endTime);
+      }
+
+      const { data: tracking } = await trackQuery.order('date', { ascending: false });
+      const { data: ads }      = await adsQuery.order('date', { ascending: false });
+      const { data: history }  = await configQuery.order('created_at', { ascending: false });
+
+      return res.json({ client, tracking, ads, history });
     }
 
     // ── BUSCAR por ID ────────────────────────────────────────
@@ -92,6 +101,12 @@ module.exports = async function clientsHandler(req, res) {
     if (method === 'POST') {
       const payload = req.body;
       payload.owner_id = userId; // força o dono
+      
+      // SQL Migration reminder:
+      // ALTER TABLE clients ADD COLUMN IF NOT EXISTS ad_account_id TEXT;
+      // ALTER TABLE clients ADD COLUMN IF NOT EXISTS business_name TEXT;
+      // ALTER TABLE clients ADD COLUMN IF NOT EXISTS account_status TEXT;
+
       const { data, error } = await supabase
         .from('clients')
         .insert([payload])

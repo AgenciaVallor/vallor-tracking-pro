@@ -88,6 +88,12 @@ module.exports = async function metaHandler(req, res) {
 
   const action = req.params.action || req.url.split('/').pop().split('?')[0];
 
+  // CENTRAL VALIDATION: Ad Account ID format check
+  const adAccountId = req.query.adAccountId || req.body?.adAccountId || req.query.accountId || req.body?.accountId;
+  if (adAccountId && !/^act_\d+$/.test(adAccountId)) {
+    return res.status(400).json({ error: "Invalid Ad Account ID format. Must be act_XXXXXXXXXX" });
+  }
+
   try {
     switch (action) {
       case 'verify-pixel': {
@@ -114,6 +120,12 @@ module.exports = async function metaHandler(req, res) {
         const usedToken = capiToken || token;
         const result = await sendTestCAPIEvent(usedToken, pixelId, domain);
         return res.json({ success: true, result });
+      }
+
+      case 'adaccounts': {
+        // Fetch all ad accounts associated with the user
+        const data = await metaRequest(token, '/me/adaccounts?fields=id,name,account_status,business,currency');
+        return res.json({ success: true, accounts: data.data || [] });
       }
 
       default:
