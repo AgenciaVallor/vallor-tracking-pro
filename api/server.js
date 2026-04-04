@@ -42,6 +42,11 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/login.html'));
 });
 
+// ── Reset Password Page ───────────────────────────────────────
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/reset-password.html'));
+});
+
 // ── Auth Routes ───────────────────────────────────────────────
 const authGoogle   = require('./auth-google');
 const authGoogleCb = require('./auth-google-cb');

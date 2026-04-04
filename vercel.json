@@ -31,6 +31,7 @@
     { "src": "/api/session", "dest": "/api/session.js" },
     { "src": "/api/config", "dest": "/api/config.js" },
     { "src": "/login", "dest": "/public/login.html" },
+    { "src": "/reset-password", "dest": "/public/reset-password.html" },
     { "src": "/(.*)", "dest": "/public/index.html" }
   ],
   "headers": [

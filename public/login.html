@@ -403,10 +403,14 @@
       <label for="password">Senha</label>
       <div class="input-wrap">
         <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
-        <button class="toggle-pw" id="togglePw" type="button" aria-label="Mostrar senha">
-          <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button class="toggle-pw" id="togglePw" type="button" aria-label="Mostrar senha" style="pointer-events:auto;z-index:10;">
+          <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
             <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:none;">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
           </svg>
         </button>
       </div>
@@ -425,60 +429,110 @@
 </div>
 
 <script>
+// ── Detecta token de recuperação de senha no hash da URL ──────
+// O Supabase envia o link para a Site URL mas com #access_token=...&type=recovery
+// Se detectado, redireciona para a página de reset mantendo o hash
+(function checkRecoveryToken() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  if (params.get('type') === 'recovery' && params.get('access_token')) {
+    window.location.href = '/reset-password' + window.location.hash;
+  }
+})();
+
 async function initLogin() {
   try {
     const res = await fetch('/api/config');
+
+    if (!res.ok) throw new Error('config_fail');
+
     const { supabaseUrl, supabaseKey } = await res.json();
     const { createClient } = window.supabase;
     const client = createClient(supabaseUrl, supabaseKey);
 
-    const btn = document.getElementById('btnLogin');
-    const pwErr = document.getElementById('pwErr');
+    const btn    = document.getElementById('btnLogin');
+    const pwErr  = document.getElementById('pwErr');
     const overlay = document.getElementById('successOverlay');
 
+    // Mapa de erros Supabase → Português
+    function traduzirErro(msg) {
+      if (!msg) return 'Erro desconhecido.';
+      if (msg.includes('Invalid login credentials'))  return 'E-mail ou senha incorretos.';
+      if (msg.includes('Email not confirmed'))        return 'Confirme seu e-mail antes de entrar.';
+      if (msg.includes('Too many requests'))          return 'Muitas tentativas. Aguarde alguns minutos.';
+      if (msg.includes('User not found'))             return 'Usuário não encontrado.';
+      return msg;
+    }
+
     btn.addEventListener('click', async () => {
-      // Limpar erros anteriores
       pwErr.textContent = '';
       pwErr.classList.remove('err');
 
-      const email = document.getElementById('email').value.trim();
+      const email    = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
 
-      if(!email || !password) {
-        pwErr.textContent = 'Preencha todos os campos';
+      if (!email || !password) {
+        pwErr.textContent = 'Preencha todos os campos.';
         pwErr.classList.add('err');
         return;
       }
 
-      // Feedback de carregamento
       btn.classList.add('loading');
       btn.disabled = true;
 
       const { data, error } = await client.auth.signInWithPassword({ email, password });
 
       if (error) {
-        pwErr.textContent = error.message;
+        pwErr.textContent = traduzirErro(error.message);
         pwErr.classList.add('err');
         btn.classList.remove('loading');
         btn.disabled = false;
       } else {
-        // Sucesso — Mostrar overlay premium antes de mudar página
         overlay.classList.add('show');
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1200);
+        setTimeout(() => { window.location.href = '/'; }, 1200);
       }
     });
 
-    // Check se já está logado
+    // Permite pressionar Enter para logar
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btn.click();
+    });
+
+    // Redireciona se já está logado
     const { data: { session } } = await client.auth.getSession();
     if (session) window.location.href = '/';
 
   } catch (err) {
     console.error('Erro na inicialização:', err);
+    const pwErr = document.getElementById('pwErr');
+    if (pwErr) {
+      pwErr.textContent = 'Servidor offline. Inicie o servidor e recarregue a página.';
+      pwErr.classList.add('err');
+    }
   }
 }
-document.addEventListener('DOMContentLoaded', initLogin);
+
+// Toggle mostrar/ocultar senha
+document.addEventListener('DOMContentLoaded', () => {
+  const toggleBtn  = document.getElementById('togglePw');
+  const pwInput    = document.getElementById('password');
+  const eyeOpen    = document.getElementById('eyeOpen');
+  const eyeClosed  = document.getElementById('eyeClosed');
+
+  if (toggleBtn && pwInput) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isPassword = pwInput.type === 'password';
+      pwInput.type = isPassword ? 'text' : 'password';
+      if (eyeOpen)   eyeOpen.style.display   = isPassword ? 'none'  : 'block';
+      if (eyeClosed) eyeClosed.style.display = isPassword ? 'block' : 'none';
+      pwInput.focus();
+    });
+  }
+  initLogin();
+});
 </script>
 </body>
 </html>
