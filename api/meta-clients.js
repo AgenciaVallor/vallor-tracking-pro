@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-const META_BASE = 'https://graph.facebook.com/v18.0';
+const META_BASE = 'https://graph.facebook.com/v19.0';
 
 async function verifyAuth(req) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -30,6 +30,102 @@ module.exports = async function metaClientsHandler(req, res) {
     const metaToken = req.session?.metaToken;
     if (!metaToken) {
       return res.status(401).json({ error: 'Meta não autenticada no servidor. Faça login com a Meta.' });
+    }
+
+    if (path.startsWith('bm/overview')) {
+      const bmsResp = await axios.get(`${META_BASE}/me/businesses`, {
+        params: { fields: 'id,name,profile_picture_uri', access_token: metaToken }
+      });
+      const businesses = bmsResp.data.data || [];
+      const resultBusinesses = [];
+
+      for (const biz of businesses) {
+        const adAccountsMap = new Map();
+
+        const fetchAccounts = async (edge) => {
+          try {
+            const accResp = await axios.get(`${META_BASE}/${biz.id}/${edge}`, {
+              params: {
+                fields: 'id,name,account_status,currency',
+                access_token: metaToken
+              }
+            });
+            const accs = accResp.data.data || [];
+            for (const a of accs) {
+              if (!adAccountsMap.has(a.id)) {
+                adAccountsMap.set(a.id, {
+                  id: a.id,
+                  name: a.name || 'Conta sem nome',
+                  status: a.account_status,
+                  currency: a.currency,
+                  insights: { spend: "0.00", impressions: 0, clicks: 0, cpc: "0.00", cpm: "0.00", leads: 0, purchases: 0, roas: 0 }
+                });
+              }
+            }
+          } catch (e) {
+            console.error(`Erro BM ${biz.id} ${edge}:`, e.response?.data || e.message);
+          }
+        };
+
+        await fetchAccounts('owned_ad_accounts');
+        await fetchAccounts('client_ad_accounts');
+
+        const adAccounts = Array.from(adAccountsMap.values());
+
+        if (adAccounts.length > 0) {
+          await Promise.allSettled(adAccounts.map(async (acc) => {
+            try {
+              const insResp = await axios.get(`${META_BASE}/${acc.id}/insights`, {
+                params: {
+                  fields: 'spend,impressions,clicks,cpc,cpm,actions,action_values',
+                  date_preset: 'last_30d',
+                  access_token: metaToken
+                }
+              });
+              const data = insResp.data;
+              if (data.data && data.data.length > 0) {
+                const d = data.data[0];
+                const spend = parseFloat(d.spend || 0);
+                let conversions = 0, purchases = 0, purchaseValue = 0;
+                
+                const actions = d.actions || [];
+                const actionValues = d.action_values || [];
+                
+                const leadsEvent = actions.find(a => a.action_type === 'lead');
+                if (leadsEvent) conversions = parseInt(leadsEvent.value);
+                
+                const purchaseEvent = actions.find(a => a.action_type === 'purchase');
+                if (purchaseEvent) purchases = parseInt(purchaseEvent.value);
+                
+                const purchaseValueObj = actionValues.find(a => a.action_type === 'purchase');
+                if (purchaseValueObj) purchaseValue = parseFloat(purchaseValueObj.value);
+                
+                acc.insights = {
+                  spend: spend.toFixed(2),
+                  impressions: parseInt(d.impressions || 0),
+                  clicks: parseInt(d.clicks || 0),
+                  cpc: parseFloat(d.cpc || 0).toFixed(2),
+                  cpm: parseFloat(d.cpm || 0).toFixed(2),
+                  leads: conversions,
+                  purchases: purchases,
+                  roas: spend > 0 ? parseFloat((purchaseValue / spend).toFixed(2)) : 0
+                };
+              }
+            } catch (e) {
+               console.error(`Erro Insights ${acc.id}:`, e.response?.data || e.message);
+            }
+          }));
+        }
+
+        resultBusinesses.push({
+          id: biz.id,
+          name: biz.name,
+          profile_picture_uri: biz.profile_picture_uri,
+          adAccounts
+        });
+      }
+
+      return res.json({ success: true, businesses: resultBusinesses });
     }
 
     if (path.startsWith('bm/accounts')) {

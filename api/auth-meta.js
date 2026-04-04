@@ -17,9 +17,13 @@ module.exports = function authMeta(req, res) {
   const baseUrl = process.env.BASE_URL || `https://${req.headers.host}`;
   const redirectUri = `${baseUrl}/auth/meta/callback`;
 
-  // Scopes básicos já aprovados pela Meta
+  // Scopes essenciais para capturar contas do BM e métricas de anúncios
   const scopes = [
     'public_profile',
+    'ads_read',
+    'ads_management',
+    'business_management',
+    'pages_read_engagement'
   ].join(',');
 
   // Monta a URL do Facebook Login Dialog

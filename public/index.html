@@ -595,7 +595,7 @@ footer em{color:var(--gold-dim);font-style:normal;}
       <table class="tracking-table" id="consolidated-table">
         <thead>
           <tr>
-            <th>Cliente</th><th>Domínio</th><th>BM</th><th>Pixel ID</th><th>EMQ</th><th>Gasto</th><th>ROAS</th><th>Status</th>
+            <th>BM</th><th>Conta de Anúncios</th><th>ID da Conta</th><th>Status</th><th>Gasto</th><th>Conversões</th><th>ROAS</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -953,7 +953,7 @@ const CONFIG = {
     'https://www.googleapis.com/auth/tagmanager.publish',
     'https://www.googleapis.com/auth/tagmanager.readonly'
   ].join(' '),
-  SCOPES_META: 'public_profile'
+  SCOPES_META: 'public_profile,ads_read,ads_management,business_management,pages_read_engagement'
 };
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -975,6 +975,59 @@ function switchView(viewId) {
   if(viewId === 'dashboard') loadDashboard();
   if(viewId === 'settings') loadSettings();
   if(viewId === 'alerts') loadAlerts();
+  if(viewId === 'consolidated') loadConsolidated();
+}
+
+async function loadConsolidated() {
+  const tbody = document.querySelector('#consolidated-table tbody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:30px;"><div class="spinner" style="margin:0 auto 10px;"></div>Carregando dados das BMs (Últimos 30 dias)... Pode demorar dependendo da quantidade de contas.</td></tr>';
+
+  try {
+    const res = await fetch('/api/meta/bm/overview');
+    const data = await res.json();
+    
+    if (data.success && data.businesses) {
+      let html = '';
+      for (const bm of data.businesses) {
+        if (!bm.adAccounts || bm.adAccounts.length === 0) continue;
+        
+        for (const acc of bm.adAccounts) {
+          const statusMap = { 1: 'Ativa', 2: 'Inativa', 3: 'Inativa', 101: 'Fechada' };
+          const statusText = statusMap[acc.status] || 'Inativa';
+          const badgeClass = acc.status === 1 ? 'tag-sent' : 'tag-error';
+          
+          html += \`
+            <tr>
+              <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  \${bm.profile_picture_uri ? \`<img src="\${bm.profile_picture_uri}" style="width:20px;height:20px;border-radius:4px" />\` : ''}
+                  <strong style="color:var(--gold2)">\${bm.name}</strong>
+                </div>
+              </td>
+              <td style="font-weight:600">\${acc.name}</td>
+              <td style="font-family:'DM Mono', monospace; font-size:11px; color:var(--gray2)">\${acc.id}</td>
+              <td><span class="\${badgeClass}">\${statusText}</span></td>
+              <td>R$ \${acc.insights.spend}</td>
+              <td>\${acc.insights.purchases > 0 ? acc.insights.purchases : acc.insights.leads}</td>
+              <td><strong style="color:var(--green)">\${acc.insights.roas}x</strong></td>
+            </tr>
+          \`;
+        }
+      }
+      
+      if (!html) {
+         html = '<tr><td colspan="7" style="text-align:center; padding:30px;">Nenhuma conta de anúncios encontrada nessas BMs.</td></tr>';
+      }
+      tbody.innerHTML = html;
+    } else {
+      tbody.innerHTML = \`<tr><td colspan="7" style="text-align:center; color:var(--red);">Erro: \${data.error || 'Autentique com a Meta na aba Automação V7.'}</td></tr>\`;
+    }
+  } catch(e) {
+    console.error('Erro loadConsolidated:', e);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--red);">Falha ao acessar os dados da API Graph.</td></tr>';
+  }
 }
 
 async function loadDashboard() {
