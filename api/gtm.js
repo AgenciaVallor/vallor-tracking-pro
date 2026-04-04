@@ -49,6 +49,30 @@ async function listAccounts(token) {
   return data.account || [];
 }
 
+// ── Lista todos os contêineres do usuário ──────────────────────
+async function listAllContainers(token) {
+  const accounts = await listAccounts(token);
+  let allContainers = [];
+  // Usa Promise.allSettled para carregar todos os contêineres paralelamente
+  await Promise.allSettled(accounts.map(async account => {
+    try {
+      const data = await gtmRequest(token, `/accounts/${account.accountId}/containers`);
+      if (data.container) {
+        allContainers.push(...data.container.map(c => ({
+          accountId: account.accountId,
+          accountName: account.name,
+          containerId: c.containerId,
+          publicId: c.publicId,
+          name: c.name
+        })));
+      }
+    } catch (e) {
+      console.warn(`Failed fetching containers for GTM Account ${account.accountId}:`, e.message);
+    }
+  }));
+  return allContainers;
+}
+
 // ── Encontra container pelo publicId (ex: GTM-XXXXXXX) ─────────
 async function findContainer(token, publicId) {
   const accounts = await listAccounts(token);
@@ -326,6 +350,11 @@ module.exports = async function gtmHandler(req, res) {
       case 'accounts': {
         const accounts = await listAccounts(token);
         return res.json({ accounts });
+      }
+
+      case 'containers': {
+        const containers = await listAllContainers(token);
+        return res.json({ containers });
       }
 
       case 'find-container': {

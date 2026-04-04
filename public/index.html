@@ -692,8 +692,14 @@ footer em{color:var(--gold-dim);font-style:normal;}
           <input type="text" id="pixelId" placeholder="1234567890123456" oninput="validateInputs()"/>
         </div>
         <div class="field">
-          <label>GTM Container ID *</label>
+          <label>GTM Container ID (Opcional se não instanciado)</label>
           <div class="hint">Começa com GTM-</div>
+          <div id="gtm-selector-wrapper" style="margin-bottom:8px; display:none;">
+            <select id="gtmId-select" onchange="document.getElementById('gtmId').value = this.value; validateInputs();" style="width:100%; margin-bottom:5px;">
+              <option value="">Selecione um Container GTM...</option>
+            </select>
+            <div id="gtm-loader" style="font-size:11px; color:var(--gray);"><div class="spinner" style="width:10px;height:10px;display:inline-block;margin-right:5px;"></div>Buscando Contêineres...</div>
+          </div>
           <input type="text" id="gtmId" placeholder="GTM-XXXXXXX" oninput="validateInputs()"/>
         </div>
       </div>
@@ -1261,10 +1267,16 @@ function setConnected(platform) {
 function checkAuthComplete() {
   const gOk = S.googleConnected;
   const mOk = S.metaConnected;
-  document.getElementById('btn-next1').disabled = !(gOk && mOk);
+  // O GTM passa a ser opcional se o cara quiser só coisas da Meta. Meta é Required.
+  document.getElementById('btn-next1').disabled = !mOk;
+  
+  const hintEl = document.getElementById('auth-hint');
   if (gOk && mOk) {
-    document.getElementById('auth-hint').className = 'alert alert-g';
-    document.getElementById('auth-hint').innerHTML = '<span>✅</span><span>Ambas as contas conectadas! Clique em Próximo para continuar.</span>';
+    hintEl.className = 'alert alert-g';
+    hintEl.innerHTML = '<span>✅</span><span>Ambas as contas conectadas! Clique em Próximo para continuar.</span>';
+  } else if (mOk && !gOk) {
+    hintEl.className = 'alert alert-w';
+    hintEl.innerHTML = '<span>⚠️</span><span>Google GTM não conectado. As tags não serão injetadas via API, mas você poderá usar a ferramenta para gerenciar Pixels/CAPI. Clique em Próximo.</span>';
   }
 }
 
@@ -1296,6 +1308,7 @@ function goTo(n) {
   S.currentPanel = n;
   
   if (n === 2 && S.metaConnected) fetchAdAccounts();
+  if (n === 2 && S.googleConnected) fetchGTMContainers();
 
   for (let i = 1; i <= 4; i++) {
     const sp = document.getElementById('sp' + i);
@@ -1317,13 +1330,13 @@ function validateInputs() {
   
   const pidOk = pid && /^\d{12,20}$/.test(pid);
   const gtmOk = gtm && /^GTM-/i.test(gtm);
-  const domOk = dom && dom.length > 3;
+  const domOk = true; // Removido o bloqueio obrigatório do Domínio a pedido do usuário
 
   const btnStep2 = document.getElementById('btn-next2');
-  if (btnStep2) btnStep2.disabled = !(pidOk && gtmOk && domOk);
+  if (btnStep2) btnStep2.disabled = !(pidOk && domOk);
 
   if (pid) document.getElementById('pixelId').className = pidOk ? 'ok' : 'err';
-  if (gtm) document.getElementById('gtmId').className = gtmOk ? 'ok' : 'err';
+  if (gtm) document.getElementById('gtmId').className = gtmOk ? 'ok' : '';
 
   // AD Account ID Validation
   if (accInput) {
@@ -1492,6 +1505,58 @@ async function fetchAdAccounts() {
     }
   } catch (e) {
     container.innerHTML = '<div style="padding:20px; color:var(--red);">Erro ao buscar contas. Insira o ID manualmente abaixo.</div>';
+  }
+}
+
+async function selectAdAccount(id, name, bmName, status) {
+  document.querySelectorAll('.ad-acc-card').forEach(c => c.style.borderColor = 'var(--border2)');
+  if (event && event.currentTarget) event.currentTarget.style.borderColor = 'var(--gold2)';
+
+  const pidInput = document.getElementById('pixelId');
+  if (!pidInput) return;
+  
+  pidInput.value = '';
+  pidInput.placeholder = 'Buscando Pixel da conta...';
+  
+  try {
+    const res = await fetch('/api/meta/pixels/' + id);
+    const data = await res.json();
+    if (data.pixels && data.pixels.length > 0) {
+      pidInput.value = data.pixels[0].id;
+      validateInputs();
+    } else {
+      pidInput.placeholder = 'Nenhum Pixel nesta conta';
+    }
+  } catch (e) {
+    pidInput.placeholder = 'Erro ao buscar Pixel';
+  }
+}
+
+async function fetchGTMContainers() {
+  const wrap = document.getElementById('gtm-selector-wrapper');
+  const sel = document.getElementById('gtmId-select');
+  const loader = document.getElementById('gtm-loader');
+  if (!wrap || !sel || !loader) return;
+  
+  wrap.style.display = 'block';
+  loader.style.display = 'block';
+  sel.style.display = 'none';
+
+  try {
+    const res = await fetch('/api/gtm/containers');
+    const data = await res.json();
+    loader.style.display = 'none';
+    sel.style.display = 'inline-block';
+    
+    if (data.containers && data.containers.length > 0) {
+      sel.innerHTML = '<option value="">Selecione um Container GTM (Auto-preenchimento)</option>' + 
+        data.containers.map(c => `<option value="${c.publicId}">${c.accountName} - ${c.name} (${c.publicId})</option>`).join('');
+    } else {
+      sel.innerHTML = '<option value="">Nenhum Container GTM encontrado logado</option>';
+    }
+  } catch(e) {
+    loader.style.display = 'none';
+    sel.style.display = 'none';
   }
 }
 
