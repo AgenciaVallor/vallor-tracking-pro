@@ -15,6 +15,10 @@
     { "src": "/auth/google/callback", "dest": "/api/auth-google-cb.js" },
     { "src": "/auth/meta", "dest": "/api/auth-meta.js" },
     { "src": "/auth/meta/callback", "dest": "/api/auth-meta-cb.js" },
+
+    { "src": "/v1/track", "dest": "/api/tracking.js" },
+    { "src": "/v1/webhooks/(.*)", "dest": "/api/webhooks.js" },
+
     { "src": "/api/gtm/(.*)", "dest": "/api/gtm.js" },
     { "src": "/api/meta/bm/(.*)", "dest": "/api/meta-clients.js" },
     { "src": "/api/meta/pixels/(.*)", "dest": "/api/meta-clients.js" },
@@ -23,25 +27,45 @@
     { "src": "/api/meta/(.*)", "dest": "/api/meta.js" },
     { "src": "/api/clients(.*)", "dest": "/api/clients.js" },
     { "src": "/api/track", "dest": "/api/tracking.js" },
+    { "src": "/api/visitors(.*)", "dest": "/api/visitors.js" },
+    { "src": "/api/conversions(.*)", "dest": "/api/conversions.js" },
     { "src": "/api/sync/(.*)", "dest": "/api/sync.js" },
     { "src": "/api/webhooks/(.*)", "dest": "/api/webhooks.js" },
     { "src": "/api/audiences/sync", "dest": "/api/audiences.js" },
     { "src": "/api/alerts/check", "dest": "/api/alerts.js" },
     { "src": "/api/dashboard", "dest": "/api/dashboard.js" },
+    { "src": "/api/analytics", "dest": "/api/analytics.js" },
+    { "src": "/api/health", "dest": "/api/server.js" },
     { "src": "/api/session", "dest": "/api/session.js" },
     { "src": "/api/config", "dest": "/api/config.js" },
     { "src": "/login", "dest": "/public/login.html" },
     { "src": "/reset-password", "dest": "/public/reset-password.html" },
+    { "src": "/vallor-tracker.js", "dest": "/public/vallor-tracker.js" },
     { "src": "/(.*)", "dest": "/public/index.html" }
   ],
   "headers": [
     {
+      "source": "/v1/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
+    },
+    {
       "source": "/api/(.*)",
       "headers": [
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "https://SEU_DOMINIO.vercel.app" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    },
+    {
+      "source": "/vallor-tracker.js",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
       ]
     }
   ],
