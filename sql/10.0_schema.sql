@@ -9,14 +9,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS citext;
 
 -- ══ 1. LIMPEZA TOTAL (remove versões anteriores) ════════════════
--- Políticas
-DROP POLICY IF EXISTS "agencies_select"           ON public.agencies;
-DROP POLICY IF EXISTS "clients_select"            ON public.clients;
-DROP POLICY IF EXISTS "tracking_events_access"    ON public.tracking_events;
-DROP POLICY IF EXISTS "conversions_access"        ON public.conversions;
-DROP POLICY IF EXISTS "visitors_access"           ON public.visitors;
-DROP POLICY IF EXISTS "integrations_access"       ON public.integrations;
-
+-- Diretamente excluindo tabelas (CASCADE remove as políticas automaticamente)
 -- Tabelas (ordem inversa de dependência)
 DROP TABLE IF EXISTS public.webhook_logs          CASCADE;
 DROP TABLE IF EXISTS public.alerts                CASCADE;
